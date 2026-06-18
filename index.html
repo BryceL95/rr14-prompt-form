@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RR14 Event Configuration Form</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --border: #d1d5db;
+      --border-focus: #3b82f6;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --accent: #eff6ff;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+    }
+
+    .page-header {
+      max-width: 820px;
+      margin: 0 auto 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .form-container {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding: 0.875rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+
+    .section-header .section-num {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .section-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.125rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    label .hint {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .checkbox-group,
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .checkbox-group label,
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.75rem;
+      cursor: pointer;
+      font-weight: 400;
+      font-size: 0.875rem;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .checkbox-group label:hover,
+    .radio-group label:hover {
+      background: var(--accent);
+      border-color: var(--border-focus);
+    }
+
+    .checkbox-group input[type="checkbox"],
+    .radio-group input[type="radio"] {
+      width: auto;
+      accent-color: var(--primary);
+    }
+
+    /* Dynamic contest list */
+    .dynamic-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .contest-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .contest-card-header {
+      background: #e0e7ff;
+      padding: 0.5rem 0.875rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #3730a3;
+    }
+
+    .contest-card-body {
+      padding: 0.875rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.875rem;
+    }
+
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    .btn-outline:hover { background: var(--accent); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      padding: 0.25rem 0.625rem;
+      font-size: 0.8rem;
+    }
+    .btn-danger:hover { background: #fef2f2; }
+
+    .btn-add {
+      margin-top: 0.25rem;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px dashed #86efac;
+    }
+    .btn-add:hover { background: #dcfce7; border-color: var(--success); }
+
+    .split-row, .timing-point-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    .split-row > * { flex: 1; }
+    .split-row > .btn-danger { flex: 0; margin-top: 1.5rem; }
+
+    .timing-point-row input { flex: 1; }
+
+    .tag-input-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.625rem;
+      background: #fff;
+      min-height: 2.4rem;
+      cursor: text;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .tag-input-wrapper:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 4px;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .tag button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-size: 0.75rem;
+      line-height: 1;
+      padding: 0;
+      opacity: 0.7;
+    }
+    .tag button:hover { opacity: 1; }
+
+    .tag-input-wrapper input {
+      border: none;
+      outline: none;
+      flex: 1;
+      min-width: 80px;
+      font-size: 0.875rem;
+      padding: 0;
+      background: transparent;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+    }
+
+    .output-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: none;
+    }
+
+    .output-section.visible { display: block; }
+
+    .output-header {
+      background: #f0fdf4;
+      border-bottom: 1px solid #86efac;
+      padding: 0.875rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .output-header h2 { font-size: 1rem; font-weight: 600; color: #166534; }
+
+    .output-body {
+      padding: 1.25rem;
+    }
+
+    #promptOutput {
+      white-space: pre-wrap;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.85rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      max-height: 500px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .copy-notice {
+      font-size: 0.8rem;
+      color: var(--success);
+      display: none;
+    }
+
+    .copy-notice.show { display: inline; }
+
+    .required-star { color: var(--danger); }
+
+    .section-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>RR14 Event Configuration</h1>
+  <p>Answer the questions below to generate a configuration prompt for your RR14 event file.</p>
+</div>
+
+<form id="rr14Form" class="form-container" novalidate>
+
+  <!-- ── Section 1: Event Basics ─────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <h2>Event Basics</h2>
+    </div>
+    <div class="section-body">
+      <div class="two-col">
+        <div class="field">
+          <label for="eventName">Event name <span class="required-star">*</span></label>
+          <input type="text" id="eventName" placeholder="e.g. Springfield City 5K" required />
+        </div>
+        <div class="field">
+          <label for="eventDate">Event date</label>
+          <input type="text" id="eventDate" placeholder="e.g. 2025-09-20" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="eventNotes">General notes about the event <span class="hint">(optional context for the AI)</span></label>
+        <textarea id="eventNotes" placeholder="e.g. multi-wave start, chip timing, 800 expected finishers…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 2: Contests ────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <h2>Contests &amp; Distances</h2>
+    </div>
+    <div class="section-body">
+      <p class="section-note">Add one entry per contest (race). Each contest has its own distance, splits, and results settings.</p>
+
+      <div id="contestList" class="dynamic-list"></div>
+
+      <button type="button" class="btn btn-add" onclick="addContest()">+ Add Contest</button>
+    </div>
+  </div>
+
+  <!-- ── Section 3: Timing Points ──────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <h2>Timing Points</h2>
+    </div>
+    <div class="section-body">
+      <p class="section-note">Timing points are <strong>physical locations on course</strong> where raw timing data is collected (mats, wands, finish clocks, etc.).</p>
+
+      <div id="timingPointList" class="dynamic-list"></div>
+
+      <button type="button" class="btn btn-add" onclick="addTimingPoint()">+ Add Timing Point</button>
+    </div>
+  </div>
+
+  <!-- ── Section 4: Results Configuration ─────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <h2>Results Configuration</h2>
+    </div>
+    <div class="section-body">
+
+      <div class="field">
+        <label>Standard result categories required</label>
+        <div class="checkbox-group" id="resultCategories">
+          <label><input type="checkbox" value="overall" checked /> Overall</label>
+          <label><input type="checkbox" value="gender_overall" checked /> Gender Overall</label>
+          <label><input type="checkbox" value="age_group" /> Age Group</label>
+          <label><input type="checkbox" value="masters" /> Masters</label>
+          <label><input type="checkbox" value="grand_masters" /> Grand Masters</label>
+          <label><input type="checkbox" value="juniors" /> Juniors</label>
+          <label><input type="checkbox" value="clydesdale" /> Clydesdale / Athena</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ageGroupBrackets">Age group brackets <span class="hint">(list each bracket, e.g. 0-9, 10-14, 15-19 … or leave blank for standard)</span></label>
+        <input type="text" id="ageGroupBrackets" placeholder="e.g. 0-14, 15-19, 20-24, 25-29 … 70+" />
+      </div>
+
+      <div class="field">
+        <label for="mastersAge">Masters minimum age</label>
+        <input type="number" id="mastersAge" placeholder="40" min="1" max="99" style="max-width:120px" />
+      </div>
+
+      <div class="field">
+        <label for="grandMastersAge">Grand Masters minimum age</label>
+        <input type="number" id="grandMastersAge" placeholder="60" min="1" max="99" style="max-width:120px" />
+      </div>
+
+      <div class="field">
+        <label>Awards depth <span class="hint">(places awarded per category)</span></label>
+        <div class="two-col" style="max-width:360px">
+          <div class="field">
+            <label for="awardsOverall" style="font-weight:400;font-size:0.8rem">Overall</label>
+            <input type="number" id="awardsOverall" placeholder="3" min="1" style="max-width:100px" />
+          </div>
+          <div class="field">
+            <label for="awardsAgeGroup" style="font-weight:400;font-size:0.8rem">Age Group</label>
+            <input type="number" id="awardsAgeGroup" placeholder="3" min="1" style="max-width:100px" />
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Section 5: Special Rankings ───────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <h2>Special Rankings</h2>
+    </div>
+    <div class="section-body">
+
+      <div class="field">
+        <label>Predefined special categories</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" value="stroller" id="chk_stroller" /> Stroller</label>
+          <label><input type="checkbox" value="dog" id="chk_dog" /> Dog / Leash</label>
+          <label><input type="checkbox" value="wheelchair" id="chk_wheelchair" /> Wheelchair</label>
+          <label><input type="checkbox" value="handcycle" id="chk_handcycle" /> Handcycle</label>
+          <label><input type="checkbox" value="military" id="chk_military" /> Military / First Responder</label>
+          <label><input type="checkbox" value="costume" id="chk_costume" /> Costume</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Custom special rankings <span class="hint">(type a name and press Enter)</span></label>
+        <div class="tag-input-wrapper" id="customRankingsWrapper" onclick="document.getElementById('customRankingInput').focus()">
+          <input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="specialRankingNotes">Additional notes on special rankings</label>
+        <textarea id="specialRankingNotes" placeholder="e.g. Stroller participants are not eligible for age group awards…"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Section 6: Scoring ─────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">6</span>
+      <h2>Special Scoring Requirements</h2>
+    </div>
+    <div class="section-body">
+
+      <div class="field">
+        <label>Scoring types needed</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" value="points_series" id="chk_points" /> Points series (season-long)</label>
+          <label><input type="checkbox" value="team_scores" id="chk_team" /> Team scores</label>
+          <label><input type="checkbox" value="gun_time" id="chk_gun" /> Gun time rankings</label>
+          <label><input type="checkbox" value="chip_time" id="chk_chip" /> Chip time rankings</label>
+          <label><input type="checkbox" value="age_graded" id="chk_ag" /> Age-graded percentages</label>
+          <label><input type="checkbox" value="wave_adjusted" id="chk_wave" /> Wave-adjusted time</label>
+        </div>
+      </div>
+
+      <div class="field" id="teamScoringOptions" style="display:none">
+        <label>Team scoring details</label>
+        <div class="two-col">
+          <div class="field">
+            <label for="teamScoringMethod" style="font-weight:400;font-size:0.8rem">Scoring method</label>
+            <select id="teamScoringMethod">
+              <option value="">-- select --</option>
+              <option value="low_score">Low score (place-based)</option>
+              <option value="cumulative_time">Cumulative time</option>
+              <option value="average_time">Average time</option>
+              <option value="top_n">Top N finishers</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="teamScoringN" style="font-weight:400;font-size:0.8rem">Scorers per team</label>
+            <input type="number" id="teamScoringN" placeholder="5" min="1" style="max-width:80px" />
+          </div>
+        </div>
+        <div class="field" style="margin-top:0.5rem">
+          <label for="teamCategories" style="font-weight:400;font-size:0.8rem">Team categories <span class="hint">(open, masters, mixed, etc.)</span></label>
+          <input type="text" id="teamCategories" placeholder="e.g. Open Men, Open Women, Mixed, Masters" />
+        </div>
+      </div>
+
+      <div class="field" id="pointsSeriesOptions" style="display:none">
+        <label for="pointsFormula">Points formula / series description</label>
+        <textarea id="pointsFormula" placeholder="e.g. 100 points for 1st, 99 for 2nd… or link to series rules"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="scoringNotes">Additional scoring notes</label>
+        <textarea id="scoringNotes" placeholder="e.g. Ties broken by gun time, minimum 3 scorers required per team…"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Section 7: Additional / Edge Cases ────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">7</span>
+      <h2>Additional Requirements</h2>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label for="additionalNotes">Anything else the AI should know when generating the RR14 configuration?</label>
+        <textarea id="additionalNotes" style="min-height:120px" placeholder="e.g. bib number ranges per contest, relay legs, cut-off times, virtual participants, import/export formats needed…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Actions ────────────────────────────────────────────────── -->
+  <div class="actions">
+    <button type="button" class="btn btn-outline" onclick="resetForm()">Clear Form</button>
+    <button type="submit" class="btn btn-primary">Generate Prompt</button>
+  </div>
+
+</form>
+
+<!-- ── Output ─────────────────────────────────────────────────── -->
+<div class="output-section" id="outputSection">
+  <div class="output-header">
+    <h2>Generated LLM Prompt</h2>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span class="copy-notice" id="copyNotice">Copied!</span>
+      <button type="button" class="btn btn-outline" onclick="copyPrompt()">Copy to Clipboard</button>
+    </div>
+  </div>
+  <div class="output-body">
+    <pre id="promptOutput"></pre>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────
+let contestCount = 0;
+let timingPointCount = 0;
+const customRankings = [];
+
+// ──────────────────────────────────────────────
+// Contests
+// ──────────────────────────────────────────────
+function addContest() {
+  contestCount++;
+  const id = contestCount;
+  const list = document.getElementById('contestList');
+
+  const card = document.createElement('div');
+  card.className = 'contest-card';
+  card.id = `contest_${id}`;
+  card.innerHTML = `
+    <div class="contest-card-header">
+      <span>Contest ${id}</span>
+      <button type="button" class="btn btn-danger" onclick="removeContest(${id})">Remove</button>
+    </div>
+    <div class="contest-card-body">
+      <div class="two-col">
+        <div class="field">
+          <label>Contest name <span class="required-star">*</span></label>
+          <input type="text" id="cName_${id}" placeholder="e.g. 5K Run" />
+        </div>
+        <div class="field">
+          <label>Distance</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="number" id="cDist_${id}" placeholder="5" min="0" step="any" style="max-width:100px" />
+            <select id="cUnit_${id}" style="max-width:100px">
+              <option value="km">km</option>
+              <option value="miles">miles</option>
+              <option value="meters">meters</option>
+              <option value="other">other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Contest type</label>
+        <div class="radio-group">
+          <label><input type="radio" name="cType_${id}" value="road" checked /> Road</label>
+          <label><input type="radio" name="cType_${id}" value="trail" /> Trail</label>
+          <label><input type="radio" name="cType_${id}" value="track" /> Track</label>
+          <label><input type="radio" name="cType_${id}" value="cross_country" /> Cross Country</label>
+          <label><input type="radio" name="cType_${id}" value="relay" /> Relay</label>
+          <label><input type="radio" name="cType_${id}" value="other" /> Other</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Split points <span class="hint">(intermediate result checkpoints)</span></label>
+        <div id="splitList_${id}" class="dynamic-list"></div>
+        <button type="button" class="btn btn-add" onclick="addSplit(${id})" style="margin-top:0.375rem">+ Add Split</button>
+      </div>
+
+      <div class="field">
+        <label>Timing points used in this contest <span class="hint">(select after defining timing points in Section 3)</span></label>
+        <div class="tag-input-wrapper" id="cTimingWrapper_${id}" onclick="document.getElementById('cTimingInput_${id}').focus()">
+          <input type="text" id="cTimingInput_${id}" placeholder="Type timing point name and press Enter…" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Contest-specific notes</label>
+        <textarea id="cNotes_${id}" rows="2" placeholder="e.g. wave start, separate bib range 1001-2000…"></textarea>
+      </div>
+    </div>
+  `;
+  list.appendChild(card);
+
+  // wire tag input for timing points in this contest
+  wireTagInput(`cTimingInput_${id}`, `cTimingWrapper_${id}`, []);
+}
+
+function removeContest(id) {
+  const el = document.getElementById(`contest_${id}`);
+  if (el) el.remove();
+}
+
+let splitCounts = {};
+
+function addSplit(contestId) {
+  if (!splitCounts[contestId]) splitCounts[contestId] = 0;
+  splitCounts[contestId]++;
+  const sid = splitCounts[contestId];
+  const list = document.getElementById(`splitList_${contestId}`);
+
+  const row = document.createElement('div');
+  row.className = 'split-row';
+  row.id = `split_${contestId}_${sid}`;
+  row.innerHTML = `
+    <div class="field">
+      <label style="font-size:0.8rem">Split name</label>
+      <input type="text" id="sName_${contestId}_${sid}" placeholder="e.g. 1 Mile Mark" />
+    </div>
+    <div class="field">
+      <label style="font-size:0.8rem">Distance from start</label>
+      <div style="display:flex;gap:0.375rem">
+        <input type="number" id="sDist_${contestId}_${sid}" placeholder="1.0" min="0" step="any" style="max-width:80px" />
+        <select id="sUnit_${contestId}_${sid}" style="max-width:80px;font-size:0.8rem">
+          <option value="miles">mi</option>
+          <option value="km">km</option>
+          <option value="meters">m</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label style="font-size:0.8rem">Timing point used</label>
+      <input type="text" id="sTimingPt_${contestId}_${sid}" placeholder="e.g. Mat 1" />
+    </div>
+    <button type="button" class="btn btn-danger" onclick="removeSplit(${contestId},${sid})">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeSplit(contestId, sid) {
+  const el = document.getElementById(`split_${contestId}_${sid}`);
+  if (el) el.remove();
+}
+
+// ──────────────────────────────────────────────
+// Timing Points
+// ──────────────────────────────────────────────
+function addTimingPoint() {
+  timingPointCount++;
+  const id = timingPointCount;
+  const list = document.getElementById('timingPointList');
+
+  const row = document.createElement('div');
+  row.className = 'timing-point-row';
+  row.id = `tp_${id}`;
+  row.innerHTML = `
+    <div class="field" style="flex:2">
+      <label style="font-size:0.8rem">Timing point name / location</label>
+      <input type="text" id="tpName_${id}" placeholder="e.g. Start Mat, Mile 1 Wand, Finish Line" />
+    </div>
+    <div class="field" style="flex:1">
+      <label style="font-size:0.8rem">Type</label>
+      <select id="tpType_${id}">
+        <option value="start">Start</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="finish">Finish</option>
+        <option value="gun">Gun Clock</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="field" style="flex:2">
+      <label style="font-size:0.8rem">Notes / equipment</label>
+      <input type="text" id="tpNotes_${id}" placeholder="e.g. RFID mat, manual stop watch…" />
+    </div>
+    <button type="button" class="btn btn-danger" onclick="removeTimingPoint(${id})" style="margin-top:1.5rem">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeTimingPoint(id) {
+  const el = document.getElementById(`tp_${id}`);
+  if (el) el.remove();
+}
+
+// ──────────────────────────────────────────────
+// Tag input (generic)
+// ──────────────────────────────────────────────
+function wireTagInput(inputId, wrapperId, store) {
+  const input = document.getElementById(inputId);
+  const wrapper = document.getElementById(wrapperId);
+  if (!input || !wrapper) return;
+
+  input.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      const val = input.value.trim().replace(/,+$/, '');
+      if (val && !store.includes(val)) {
+        store.push(val);
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.dataset.value = val;
+        tag.innerHTML = `${escHtml(val)} <button type="button" title="remove">✕</button>`;
+        tag.querySelector('button').addEventListener('click', () => {
+          const idx = store.indexOf(val);
+          if (idx > -1) store.splice(idx, 1);
+          tag.remove();
+        });
+        wrapper.insertBefore(tag, input);
+      }
+      input.value = '';
+    }
+  });
+}
+
+// Custom rankings tag input
+wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+
+// ──────────────────────────────────────────────
+// Conditional visibility
+// ──────────────────────────────────────────────
+document.getElementById('chk_team').addEventListener('change', function () {
+  document.getElementById('teamScoringOptions').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('chk_points').addEventListener('change', function () {
+  document.getElementById('pointsSeriesOptions').style.display = this.checked ? 'block' : 'none';
+});
+
+// ──────────────────────────────────────────────
+// Prompt generation
+// ──────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function getChecked(containerId) {
+  return [...document.querySelectorAll(`#${containerId} input[type=checkbox]:checked`)]
+    .map(c => c.value);
+}
+
+function getRadioValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+
+function getTagsFromWrapper(wrapperId) {
+  return [...document.querySelectorAll(`#${wrapperId} .tag`)].map(t => t.dataset.value);
+}
+
+function buildPrompt() {
+  const lines = [];
+  const push = (s) => lines.push(s);
+  const blank = () => lines.push('');
+
+  push('You are an expert in race timing software configuration, specifically RR14 (Race Result 14).');
+  push('Using the event details below, generate a complete, well-structured RR14 event file configuration.');
+  push('Include all necessary settings for contests, timing points, split points, results lists, and scoring.');
+  blank();
+  push('════════════════════════════════════════════════');
+  push('EVENT DETAILS');
+  push('════════════════════════════════════════════════');
+  blank();
+
+  // Event basics
+  const eventName = document.getElementById('eventName').value.trim();
+  const eventDate = document.getElementById('eventDate').value.trim();
+  const eventNotes = document.getElementById('eventNotes').value.trim();
+
+  push(`Event Name: ${eventName || '(not specified)'}`);
+  if (eventDate) push(`Event Date: ${eventDate}`);
+  if (eventNotes) push(`General Notes: ${eventNotes}`);
+  blank();
+
+  // Contests
+  push('── CONTESTS ──────────────────────────────────');
+  const contestCards = document.querySelectorAll('.contest-card');
+  if (contestCards.length === 0) {
+    push('  (no contests defined)');
+  } else {
+    contestCards.forEach((card, i) => {
+      const cid = card.id.replace('contest_', '');
+      const name = document.getElementById(`cName_${cid}`)?.value.trim() || `Contest ${i+1}`;
+      const dist = document.getElementById(`cDist_${cid}`)?.value.trim();
+      const unit = document.getElementById(`cUnit_${cid}`)?.value;
+      const type = getRadioValue(`cType_${cid}`);
+      const notes = document.getElementById(`cNotes_${cid}`)?.value.trim();
+      const timingPts = getTagsFromWrapper(`cTimingWrapper_${cid}`);
+
+      push(`\nContest ${i+1}: ${name}`);
+      if (dist) push(`  Distance: ${dist} ${unit}`);
+      if (type) push(`  Type: ${type}`);
+      if (timingPts.length) push(`  Timing points used: ${timingPts.join(', ')}`);
+
+      // Splits
+      const splitRows = document.querySelectorAll(`[id^="split_${cid}_"]`);
+      if (splitRows.length) {
+        push('  Split Points:');
+        splitRows.forEach((row) => {
+          const parts = row.id.split('_');
+          const sid = parts[parts.length - 1];
+          const sName = document.getElementById(`sName_${cid}_${sid}`)?.value.trim();
+          const sDist = document.getElementById(`sDist_${cid}_${sid}`)?.value.trim();
+          const sUnit = document.getElementById(`sUnit_${cid}_${sid}`)?.value;
+          const sTp   = document.getElementById(`sTimingPt_${cid}_${sid}`)?.value.trim();
+          let splitLine = `    - ${sName || 'Unnamed split'}`;
+          if (sDist) splitLine += ` at ${sDist} ${sUnit}`;
+          if (sTp)   splitLine += ` (timing point: ${sTp})`;
+          push(splitLine);
+        });
+      } else {
+        push('  Split Points: none');
+      }
+
+      if (notes) push(`  Notes: ${notes}`);
+    });
+  }
+  blank();
+
+  // Timing points
+  push('── TIMING POINTS ─────────────────────────────');
+  const tpRows = document.querySelectorAll('[id^="tp_"]');
+  if (tpRows.length === 0) {
+    push('  (no timing points defined)');
+  } else {
+    tpRows.forEach((row) => {
+      const tid = row.id.replace('tp_', '');
+      const tName  = document.getElementById(`tpName_${tid}`)?.value.trim();
+      const tType  = document.getElementById(`tpType_${tid}`)?.value;
+      const tNotes = document.getElementById(`tpNotes_${tid}`)?.value.trim();
+      let line = `  - ${tName || 'Unnamed'} [${tType}]`;
+      if (tNotes) line += ` — ${tNotes}`;
+      push(line);
+    });
+  }
+  blank();
+
+  // Results
+  push('── RESULTS CONFIGURATION ─────────────────────');
+  const resultCats = getChecked('resultCategories');
+  push(`  Standard categories: ${resultCats.length ? resultCats.join(', ') : 'none selected'}`);
+
+  const ageGroups = document.getElementById('ageGroupBrackets').value.trim();
+  if (ageGroups) push(`  Age group brackets: ${ageGroups}`);
+
+  const mastersAge = document.getElementById('mastersAge').value.trim();
+  if (mastersAge) push(`  Masters minimum age: ${mastersAge}`);
+
+  const grandMastersAge = document.getElementById('grandMastersAge').value.trim();
+  if (grandMastersAge) push(`  Grand Masters minimum age: ${grandMastersAge}`);
+
+  const awardsOverall = document.getElementById('awardsOverall').value.trim();
+  const awardsAG = document.getElementById('awardsAgeGroup').value.trim();
+  if (awardsOverall) push(`  Awards depth (overall): ${awardsOverall} places`);
+  if (awardsAG) push(`  Awards depth (age group): ${awardsAG} places`);
+  blank();
+
+  // Special rankings
+  push('── SPECIAL RANKINGS ──────────────────────────');
+  const predefined = ['stroller','dog','wheelchair','handcycle','military','costume']
+    .filter(v => document.getElementById(`chk_${v}`)?.checked);
+  const custom = customRankings.slice();
+  const allRankings = [...predefined, ...custom];
+  push(`  Special categories: ${allRankings.length ? allRankings.join(', ') : 'none'}`);
+
+  const rankNotes = document.getElementById('specialRankingNotes').value.trim();
+  if (rankNotes) push(`  Notes: ${rankNotes}`);
+  blank();
+
+  // Scoring
+  push('── SCORING ───────────────────────────────────');
+  const scoringTypes = getChecked('rr14Form');  // will re-do below
+  // Re-collect just scoring checkboxes
+  const scoringChecks = [...document.querySelectorAll('#rr14Form input[type=checkbox][id^="chk_"]')]
+    .filter(c => ['chk_points','chk_team','chk_gun','chk_chip','chk_ag','chk_wave'].includes(c.id) && c.checked)
+    .map(c => c.value);
+
+  push(`  Scoring types: ${scoringChecks.length ? scoringChecks.join(', ') : 'standard (none specified)'}`);
+
+  if (document.getElementById('chk_team').checked) {
+    const method = document.getElementById('teamScoringMethod').value;
+    const n = document.getElementById('teamScoringN').value.trim();
+    const cats = document.getElementById('teamCategories').value.trim();
+    if (method) push(`  Team scoring method: ${method}`);
+    if (n) push(`  Scorers per team: ${n}`);
+    if (cats) push(`  Team categories: ${cats}`);
+  }
+
+  if (document.getElementById('chk_points').checked) {
+    const formula = document.getElementById('pointsFormula').value.trim();
+    if (formula) push(`  Points formula: ${formula}`);
+  }
+
+  const scoringNotes = document.getElementById('scoringNotes').value.trim();
+  if (scoringNotes) push(`  Additional scoring notes: ${scoringNotes}`);
+  blank();
+
+  // Additional
+  const additional = document.getElementById('additionalNotes').value.trim();
+  if (additional) {
+    push('── ADDITIONAL REQUIREMENTS ───────────────────');
+    push(additional);
+    blank();
+  }
+
+  push('════════════════════════════════════════════════');
+  push('Please generate a complete RR14 event configuration based on the information above.');
+  push('Explain each major configuration section and provide specific RR14 settings/values where applicable.');
+
+  return lines.join('\n');
+}
+
+// ──────────────────────────────────────────────
+// Form submit
+// ──────────────────────────────────────────────
+document.getElementById('rr14Form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const prompt = buildPrompt();
+  document.getElementById('promptOutput').textContent = prompt;
+  const out = document.getElementById('outputSection');
+  out.classList.add('visible');
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ──────────────────────────────────────────────
+// Copy to clipboard
+// ──────────────────────────────────────────────
+function copyPrompt() {
+  const text = document.getElementById('promptOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const notice = document.getElementById('copyNotice');
+    notice.classList.add('show');
+    setTimeout(() => notice.classList.remove('show'), 2000);
+  });
+}
+
+// ──────────────────────────────────────────────
+// Reset
+// ──────────────────────────────────────────────
+function resetForm() {
+  if (!confirm('Clear all form data?')) return;
+  document.getElementById('rr14Form').reset();
+  document.getElementById('contestList').innerHTML = '';
+  document.getElementById('timingPointList').innerHTML = '';
+  document.getElementById('customRankingsWrapper').innerHTML =
+    '<input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />';
+  wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+  customRankings.length = 0;
+  contestCount = 0;
+  timingPointCount = 0;
+  splitCounts = {};
+  document.getElementById('teamScoringOptions').style.display = 'none';
+  document.getElementById('pointsSeriesOptions').style.display = 'none';
+  document.getElementById('outputSection').classList.remove('visible');
+}
+
+// Start with one contest and two timing points as defaults
+addContest();
+addTimingPoint();
+addTimingPoint();
+</script>
+</body>
+</html>

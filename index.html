@@ -151,6 +151,33 @@
     .required-star { color: var(--danger); }
     .section-note { font-size: 0.8rem; color: var(--text-muted); background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; }
     .small-label { font-weight: 400; font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── HTML Configuration Report ───────────────────────────────── */
+    .html-report { font-size: 0.9rem; }
+    .html-report h1 { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
+    .html-report .report-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); }
+    .html-report .report-section { margin-bottom: 2rem; }
+    .html-report .report-section h2 { font-size: 0.95rem; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 0.35rem; margin-bottom: 1rem; letter-spacing: 0.01em; }
+    .html-report .report-section h3 { font-size: 0.875rem; font-weight: 600; color: #374151; margin: 0.875rem 0 0.5rem; }
+    .html-report table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .html-report th { background: var(--accent); color: var(--primary); font-weight: 600; text-align: left; padding: 0.45rem 0.75rem; border: 1px solid var(--border); }
+    .html-report td { padding: 0.45rem 0.75rem; border: 1px solid var(--border); vertical-align: top; }
+    .html-report tr:nth-child(even) td { background: #f9fafb; }
+    /* Split flow diagram */
+    .split-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 0.625rem 0 0.875rem; }
+    .split-node { background: var(--primary); color: #fff; border-radius: 6px; padding: 0.375rem 0.625rem; font-size: 0.78rem; font-weight: 600; text-align: center; line-height: 1.3; }
+    .split-node.race-start { background: #059669; }
+    .split-node.finish-node { background: #dc2626; }
+    .split-arrow { color: var(--text-muted); font-size: 1.1rem; padding: 0 0.2rem; display: flex; align-items: center; }
+    /* Result cards */
+    .result-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 0.5rem; }
+    .result-card-hd { background: var(--accent); padding: 0.45rem 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
+    .result-card-num { background: var(--primary); color: #fff; border-radius: 50%; width: 1.35rem; height: 1.35rem; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .result-card-name { font-weight: 600; font-size: 0.875rem; color: var(--primary); }
+    .result-card-bd { padding: 0.45rem 0.875rem; font-size: 0.83rem; color: var(--text-muted); }
+    /* Placeholder / TODO boxes */
+    .ph-box { background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 6px; padding: 0.45rem 0.75rem; font-size: 0.8rem; color: #92400e; margin-top: 0.75rem; }
+    .ph-box strong { color: #b45309; }
   </style>
 </head>
 <body>
@@ -483,7 +510,7 @@
   </div>
   <div class="output-body">
     <div id="tab-prompt" class="tab-panel"><pre id="promptOutput"></pre></div>
-    <div id="tab-report" class="tab-panel" style="display:none"><pre id="reportOutput"></pre></div>
+    <div id="tab-report" class="tab-panel" style="display:none"><div id="reportOutput" class="html-report"></div></div>
   </div>
 </div>
 
@@ -603,6 +630,23 @@ function updateAllSplitTimingSelects() {
   });
 }
 
+// ── Split discipline change ────────────────────────────────────────
+function onSplitDiscChange(contestId, sid) {
+  const disc      = document.getElementById(`sDisc_${contestId}_${sid}`)?.value;
+  const distInput = document.getElementById(`sDist_${contestId}_${sid}`);
+  const unitSel   = document.getElementById(`sUnit_${contestId}_${sid}`);
+  const isStart   = disc === 'race_start';
+  if (distInput) {
+    if (isStart) distInput.value = '0';
+    distInput.disabled = isStart;
+    distInput.style.opacity = isStart ? '0.45' : '';
+  }
+  if (unitSel) {
+    unitSel.disabled = isStart;
+    unitSel.style.opacity = isStart ? '0.45' : '';
+  }
+}
+
 // ── Contests ───────────────────────────────────────────────────────
 function addContest() {
   contestCount++;
@@ -666,7 +710,8 @@ function addSplit(contestId) {
         </div>
         <div class="field">
           <label style="font-size:0.8rem">Discipline</label>
-          <select id="sDisc_${contestId}_${sid}">
+          <select id="sDisc_${contestId}_${sid}" onchange="onSplitDiscChange(${contestId},${sid})">
+            <option value="race_start">Race Start</option>
             <option value="running">Running</option>
             <option value="cycling">Cycling</option>
             <option value="swimming">Swimming</option>
@@ -694,8 +739,8 @@ function addSplit(contestId) {
       </div>
     </div>`;
   document.getElementById(`splitList_${contestId}`).appendChild(card);
-  // Populate the new select with current timing points
   updateAllSplitTimingSelects();
+  onSplitDiscChange(contestId, sid); // apply race_start greying if default
 }
 
 function removeSplit(contestId, sid) {
@@ -740,8 +785,9 @@ function switchTab(name, btn) {
 }
 
 function copyOutput() {
-  const el = document.getElementById(activeTab === 'prompt' ? 'promptOutput' : 'reportOutput');
-  navigator.clipboard.writeText(el.textContent).then(() => {
+  const el   = document.getElementById(activeTab === 'prompt' ? 'promptOutput' : 'reportOutput');
+  const text = activeTab === 'prompt' ? el.textContent : el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
     const notice = document.getElementById('copyNotice');
     notice.classList.add('show');
     setTimeout(() => notice.classList.remove('show'), 2000);
@@ -781,6 +827,9 @@ function buildPrompt() {
     });
   }
   blank();
+  push('[INSTRUCTION PLACEHOLDER — TIMING POINTS]');
+  push('// TODO: Add RR14 MCP instructions for timing point configuration here.');
+  blank();
 
   // Contests
   push('── CONTESTS ──────────────────────────────────');
@@ -819,6 +868,9 @@ function buildPrompt() {
       if (cNote) push(`  Notes: ${cNote}`);
     });
   }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — CONTESTS & SPLITS]');
+  push('// TODO: Add RR14 MCP instructions for contest and split point configuration here.');
   blank();
 
   // Results
@@ -887,8 +939,10 @@ function buildPrompt() {
   });
   if (document.getElementById('res_no_double_dip')?.checked) {
     push('  No double dipping: enabled — participants placed in a higher-priority category are excluded from awards in lower-priority categories.');
-    push('  [TODO: Insert specific RR14 double-dipping configuration instructions here]');
   }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — RESULTS CONFIGURATION]');
+  push('// TODO: Add RR14 MCP instructions for results lists, report templates, and awards setup here.');
   blank();
 
   // Special rankings
@@ -896,6 +950,9 @@ function buildPrompt() {
   const allSpecial = getSpecialCategories();
   push(`  Special categories: ${allSpecial.length ? allSpecial.join(', ') : 'none'}`);
   const rn = v('specialRankingNotes'); if (rn) push(`  Notes: ${rn}`);
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — SPECIAL RANKINGS]');
+  push('// TODO: Add RR14 MCP instructions for special ranking and category configuration here.');
   blank();
 
   // Scoring
@@ -922,6 +979,9 @@ function buildPrompt() {
   }
   const sn = v('scoringNotes'); if (sn) push(`  Additional notes: ${sn}`);
   blank();
+  push('[INSTRUCTION PLACEHOLDER — SCORING]');
+  push('// TODO: Add RR14 MCP instructions for scoring configuration here.');
+  blank();
 
   const addl = v('additionalNotes');
   if (addl) { push('── ADDITIONAL REQUIREMENTS ───────────────────'); push(addl); blank(); }
@@ -933,107 +993,118 @@ function buildPrompt() {
   return L.join('\n');
 }
 
-// ── Build Configuration Report ─────────────────────────────────────
+// ── Build Configuration Report (HTML) ─────────────────────────────
 function buildReport() {
-  const L = [];
-  const push  = s => L.push(s);
-  const blank = () => L.push('');
-  const hr    = s => push(`── ${s} ${'─'.repeat(Math.max(0, 46 - s.length - 4))}`);
+  const h   = [];
+  const out = s => h.push(s);
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  push('╔══════════════════════════════════════════════╗');
-  push('║        EVENT CONFIGURATION REPORT           ║');
-  push('╚══════════════════════════════════════════════╝');
-  blank();
-  push(`Event: ${v('eventName') || '(unnamed event)'}`);
-  blank();
+  const eventName    = v('eventName') || '(unnamed event)';
+  const eventDate    = v('eventDate');
+  const contestCards = [...document.querySelectorAll('.contest-card')];
+  const multiContest = contestCards.length > 1;
+  const allSpecial   = getSpecialCategories();
 
-  // ── A: Additional Data Fields ──────────────────────────────────
-  hr('A. ADDITIONAL DATA FIELDS');
-  blank();
-  push('The following fields will be generated for each participant record:');
-  blank();
-  push('  Standard:');
-  push('    • Bib number');
-  push('    • Name, gender, date of birth / age');
-  push('    • Gun time, net (chip) time');
-  push('    • Overall place');
+  // ── Header ─────────────────────────────────────────────────────
+  out(`<h1>Event Configuration Report</h1>`);
+  out(`<p class="report-meta">Event: <strong>${esc(eventName)}</strong>${eventDate ? ` &nbsp;|&nbsp; Date: <strong>${esc(eventDate)}</strong>` : ''}</p>`);
 
-  const contestCards  = [...document.querySelectorAll('.contest-card')];
-  const multiContest  = contestCards.length > 1;
-
-  if (contestCards.length) {
-    blank();
-    push('  Split time fields:');
-    contestCards.forEach((card, ci) => {
-      const cid    = card.id.replace('contest_', '');
-      const cName  = v(`cName_${cid}`) || `Contest ${ci+1}`;
-      getContestSplits(cid).forEach((row, si) => {
-        const sid   = row.id.split('_').pop();
-        const sName = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
-        const sDist = v(`sDist_${cid}_${sid}`);
-        const sUnit = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
-        const sDisc = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
-        const pfx   = multiContest ? `[${cName}] ` : '';
-        push(`    • ${pfx}${sName} time — ${sDisc}${sDist ? `, @ ${sDist} ${sUnit}` : ''}`);
-      });
+  // ── A. Generated Data Fields ───────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>A. Generated Data Fields</h2>');
+  out('<p style="font-size:0.85rem;margin-bottom:0.75rem">The following fields will be generated for each participant record:</p>');
+  out('<table><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody>');
+  out('<tr><td><strong>Bib</strong></td><td>Participant bib number — primary identifier</td></tr>');
+  out('<tr><td><strong>Name</strong></td><td>Participant full name</td></tr>');
+  out('<tr><td><strong>Gender</strong></td><td>Gender (M / F)</td></tr>');
+  out('<tr><td><strong>DOB / Age</strong></td><td>Date of birth and computed age on race day</td></tr>');
+  out('<tr><td><strong>Gun Time</strong></td><td>Elapsed time from gun start to finish</td></tr>');
+  out('<tr><td><strong>Net Time</strong></td><td>Chip (net) time — elapsed from individual crossing of start mat to finish</td></tr>');
+  out('<tr><td><strong>Overall Place</strong></td><td>Overall finishing position</td></tr>');
+  contestCards.forEach((card, ci) => {
+    const cid   = card.id.replace('contest_', '');
+    const cName = v(`cName_${cid}`) || `Contest ${ci+1}`;
+    getContestSplits(cid).forEach((row, si) => {
+      const sid    = row.id.split('_').pop();
+      const sName  = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+      const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+      const sDist  = v(`sDist_${cid}_${sid}`);
+      const sUnit  = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+      const isLast = si === getContestSplits(cid).length - 1;
+      const pfx    = multiContest ? `[${esc(cName)}] ` : '';
+      if (sDisc === 'race_start') return; // race start has no elapsed time field
+      out(`<tr><td><strong>${pfx}${esc(sName)} Time</strong></td><td>${esc(cap(sDisc))} split time${sDist ? ` at ${esc(sDist)} ${esc(sUnit)} from start` : ''}${isLast ? ' — <em>finish / total time</em>' : ''}</td></tr>`);
     });
-  }
+  });
+  allSpecial.forEach(cat =>
+    out(`<tr><td><strong>${esc(cap(cat))} Flag</strong></td><td>Boolean flag marking participant as ${esc(cap(cat))} category member</td></tr>`));
+  if (document.getElementById('chk_wave')?.checked)
+    out('<tr><td><strong>Wave</strong></td><td>Start wave number used for special-wave time adjustment</td></tr>');
+  if (document.getElementById('chk_ag')?.checked)
+    out('<tr><td><strong>Age Graded %</strong></td><td>Age-graded performance percentage using configured standard</td></tr>');
+  if (document.getElementById('chk_team')?.checked)
+    out('<tr><td><strong>Team</strong></td><td>Team affiliation used for team scoring</td></tr>');
+  if (document.getElementById('chk_points')?.checked)
+    out('<tr><td><strong>Points</strong></td><td>Series points earned at this event</td></tr>');
+  out('</tbody></table>');
+  out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add specific RR14 field configuration instructions here (field mappings, custom field setup via MCP).</div>');
+  out('</div>');
 
-  const allSpecial = getSpecialCategories();
-  if (allSpecial.length) {
-    blank();
-    push('  Special category flags:');
-    allSpecial.forEach(cat => push(`    • ${cat}_flag — marks participant as ${cap(cat)} category`));
-  }
-
-  const scoringFields = [];
-  if (document.getElementById('chk_wave')?.checked)   scoringFields.push('• wave — wave number (special start waves)');
-  if (document.getElementById('chk_ag')?.checked)     scoringFields.push('• age_graded_pct — age-graded performance %');
-  if (document.getElementById('chk_team')?.checked)   scoringFields.push('• team — team affiliation');
-  if (document.getElementById('chk_points')?.checked) scoringFields.push('• points — series points earned');
-  if (scoringFields.length) { blank(); push('  Scoring fields:'); scoringFields.forEach(f => push(`    ${f}`)); }
-  blank();
-
-  // ── B: Contests & Split Points ─────────────────────────────────
-  hr('B. CONTESTS & SPLIT POINTS');
-  blank();
-
+  // ── B. Course Layout ───────────────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>B. Course Layout</h2>');
   if (!contestCards.length) {
-    push('  (no contests defined)');
+    out('<p style="font-size:0.85rem;color:var(--text-muted)">No contests defined.</p>');
   } else {
     contestCards.forEach((card, ci) => {
       const cid     = card.id.replace('contest_', '');
       const cName   = v(`cName_${cid}`) || `Contest ${ci+1}`;
       const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
       const splits  = getContestSplits(cid);
-      push(`  Contest ${ci+1}: ${cName}`);
-      push(`    Timing method : ${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}`);
+      if (multiContest) out(`<h3>${esc(cName)}</h3>`);
+      out(`<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Timing method: <strong>${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}</strong></p>`);
       if (!splits.length) {
-        push('    Splits        : none defined');
+        out('<p style="font-size:0.85rem;color:var(--text-muted)">No splits defined.</p>');
       } else {
+        // Flow diagram
+        out('<div class="split-flow">');
+        splits.forEach((row, si) => {
+          const sid   = row.id.split('_').pop();
+          const sName = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+          const sDisc = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+          const sDist = v(`sDist_${cid}_${sid}`);
+          const sUnit = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+          const isLast = si === splits.length - 1;
+          const cls   = sDisc === 'race_start' ? 'split-node race-start' : isLast ? 'split-node finish-node' : 'split-node';
+          if (si > 0) out('<span class="split-arrow">→</span>');
+          out(`<div class="${cls}">${esc(sName)}${sDist && sDisc !== 'race_start' ? `<br><span style="font-size:0.68rem;font-weight:400;opacity:0.9">${esc(sDist)} ${esc(sUnit)}</span>` : ''}</div>`);
+        });
+        out('</div>');
+        // Detail table
+        out('<table style="margin-top:0.75rem"><thead><tr><th>#</th><th>Name</th><th>Discipline</th><th>Distance from Start</th><th>Timing Point</th></tr></thead><tbody>');
         splits.forEach((row, si) => {
           const sid    = row.id.split('_').pop();
           const sName  = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+          const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
           const sDist  = v(`sDist_${cid}_${sid}`);
           const sUnit  = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
           const sTp    = v(`sTimingPt_${cid}_${sid}`);
-          const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
           const isLast = si === splits.length - 1;
-          push(`    ${si+1}. ${sName}${isLast ? ' [FINISH]' : ''}`);
-          push(`       Discipline : ${cap(sDisc)}`);
-          if (sDist) push(`       Distance  : ${sDist} ${sUnit} from start`);
-          if (sTp)   push(`       Timing pt : ${sTp}`);
+          const distCell = sDisc === 'race_start' ? '0 (start)' : (sDist ? `${esc(sDist)} ${esc(sUnit)}` : '—');
+          out(`<tr><td>${si+1}</td><td>${esc(sName)}${isLast ? ' <em style="color:#dc2626">[Finish]</em>' : ''}</td><td>${esc(cap(sDisc))}</td><td>${distCell}</td><td>${sTp ? esc(sTp) : '—'}</td></tr>`);
         });
+        out('</tbody></table>');
       }
-      blank();
+      out('<div class="ph-box" style="margin-top:0.75rem"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for configuring this contest\'s timing points and split setup here.</div>');
+      if (multiContest && ci < contestCards.length - 1) out('<hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">');
     });
   }
+  out('</div>');
 
-  // ── C: Results & Awards Lists ──────────────────────────────────
-  hr('C. RESULTS & AWARDS LISTS');
-  blank();
-  push('The following results lists and awards reports will be generated:');
-  blank();
+  // ── C. Results & Awards Lists ──────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>C. Results &amp; Awards Lists</h2>');
+  out('<p style="font-size:0.85rem;margin-bottom:0.875rem">The following results lists and awards reports will be produced:</p>');
 
   const hasOverall   = document.getElementById('res_overall')?.checked;
   const hasGenderOvr = document.getElementById('res_gender_overall')?.checked;
@@ -1042,7 +1113,7 @@ function buildReport() {
   const hasGrandM    = document.getElementById('res_grand_masters')?.checked;
   const hasJuniors   = document.getElementById('res_juniors')?.checked;
   const hasClydes    = document.getElementById('res_clydesdale')?.checked;
-
+  const hasNoDblDip  = document.getElementById('res_no_double_dip')?.checked;
   const dOvr  = v('depthOverall')       || '3';
   const dGOvr = v('depthGenderOverall') || '3';
   const dAG   = v('depthAgeGroup')      || '3';
@@ -1050,111 +1121,121 @@ function buildReport() {
   const dGM   = v('depthGrandMasters')  || '3';
   const dJr   = v('depthJuniors')       || '3';
   const dCly  = v('depthClydesdale')    || '3';
-
   const mastersAge = v('mastersAge')      || '40';
   const grandMAge  = v('grandMastersAge') || '60';
   const juniorsAge = v('juniorsMaxAge')   || '19';
-
   const agGG   = document.getElementById('agGenderGroup')?.checked;
   const mastGG = document.getElementById('mastersGenderGroup')?.checked;
   const grandGG= document.getElementById('grandMastersGenderGroup')?.checked;
   const jrGG   = document.getElementById('juniorsGenderGroup')?.checked;
-
   const clydW  = v('clydWeight');
   const athenaW= v('athenaWeight');
   const brackets = (v('ageGroupBrackets') || '').split(',').map(b => b.trim()).filter(Boolean);
 
   let n = 0;
-  const report = (name, desc) => { push(`  ${++n}. ${name}`); push(`     ${desc}`); };
+  function resultCard(name, desc) {
+    n++;
+    out(`<div class="result-card"><div class="result-card-hd"><div class="result-card-num">${n}</div><div class="result-card-name">${name}</div></div><div class="result-card-bd">${desc}</div></div>`);
+  }
 
   contestCards.forEach((card, ci) => {
-    const cid   = card.id.replace('contest_', '');
-    const cName = v(`cName_${cid}`) || `Contest ${ci+1}`;
-    const pfx   = multiContest ? `[${cName}] ` : '';
-    const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
+    const cid       = card.id.replace('contest_', '');
+    const cName     = v(`cName_${cid}`) || `Contest ${ci+1}`;
+    const pfx       = multiContest ? `[${esc(cName)}] ` : '';
+    const cTiming   = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
     const timeLabel = cTiming === 'gun' ? 'gun time' : 'chip time';
-
-    if (multiContest) push(`  ── ${cName} ──`);
+    if (multiContest) out(`<h3>── ${esc(cName)}</h3>`);
 
     if (hasOverall)
-      report(`${pfx}Overall`,
-        `All finishers ranked by ${timeLabel}. Top ${dOvr} places awarded.`);
-
+      resultCard(`${pfx}Overall Results`,
+        `All finishers ranked by ${timeLabel}. Top <strong>${dOvr}</strong> overall places awarded.`);
     if (hasGenderOvr)
-      report(`${pfx}Gender Overall`,
-        `All finishers in one list, grouped by gender (male / female each ranked by ${timeLabel}). Top ${dGOvr} per gender awarded.`);
-
+      resultCard(`${pfx}Gender Overall`,
+        `All finishers in one combined list. Results ranked within each gender group by ${timeLabel}. Top <strong>${dGOvr}</strong> per gender awarded.`);
     if (hasAgeGroup) {
-      const gNote  = agGG ? `, grouped by gender within bracket (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
-      const dNote  = agGG ? `Top ${dAG} per gender group awarded.` : `Top ${dAG} awarded.`;
-      if (brackets.length) {
-        brackets.forEach(b => report(`${pfx}Age Group ${b}`, `Finishers in age bracket ${b}${gNote}. ${dNote}`));
-      } else {
-        report(`${pfx}Age Group Results`, `Finishers by age bracket (brackets TBD)${gNote}. ${dNote}`);
-      }
+      const gn = agGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = agGG ? `Top <strong>${dAG}</strong> per gender awarded.` : `Top <strong>${dAG}</strong> awarded.`;
+      if (brackets.length)
+        brackets.forEach(b => resultCard(`${pfx}Age Group ${esc(b)}`, `Finishers in bracket <strong>${esc(b)}</strong>${gn}. ${dn}`));
+      else
+        resultCard(`${pfx}Age Group Results`, `Finishers grouped by age bracket (brackets TBD)${gn}. ${dn}`);
     }
-
     if (hasMasters) {
-      const gNote = mastGG ? `, grouped by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
-      const dNote = mastGG ? `Top ${dMast} per gender awarded.` : `Top ${dMast} awarded.`;
-      report(`${pfx}Masters (${mastersAge}+)`, `Finishers aged ${mastersAge}+${gNote}. ${dNote}`);
+      const gn = mastGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = mastGG ? `Top <strong>${dMast}</strong> per gender awarded.` : `Top <strong>${dMast}</strong> awarded.`;
+      resultCard(`${pfx}Masters (${esc(mastersAge)}+)`, `Finishers aged <strong>${esc(mastersAge)}+</strong>${gn}. ${dn}`);
     }
-
     if (hasGrandM) {
-      const gNote = grandGG ? `, grouped by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
-      const dNote = grandGG ? `Top ${dGM} per gender awarded.` : `Top ${dGM} awarded.`;
-      report(`${pfx}Grand Masters (${grandMAge}+)`, `Finishers aged ${grandMAge}+${gNote}. ${dNote}`);
+      const gn = grandGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = grandGG ? `Top <strong>${dGM}</strong> per gender awarded.` : `Top <strong>${dGM}</strong> awarded.`;
+      resultCard(`${pfx}Grand Masters (${esc(grandMAge)}+)`, `Finishers aged <strong>${esc(grandMAge)}+</strong>${gn}. ${dn}`);
     }
-
     if (hasJuniors) {
-      const u     = `U${parseInt(juniorsAge)+1}`;
-      const gNote = jrGG ? `, grouped by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
-      const dNote = jrGG ? `Top ${dJr} per gender awarded.` : `Top ${dJr} awarded.`;
-      report(`${pfx}Juniors (${u})`, `Finishers aged ≤${juniorsAge}${gNote}. ${dNote}`);
+      const u  = `U${parseInt(juniorsAge)+1}`;
+      const gn = jrGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = jrGG ? `Top <strong>${dJr}</strong> per gender awarded.` : `Top <strong>${dJr}</strong> awarded.`;
+      resultCard(`${pfx}Juniors (${u})`, `Finishers aged <strong>≤${esc(juniorsAge)}</strong>${gn}. ${dn}`);
     }
-
     if (hasClydes) {
-      report(`${pfx}Clydesdale`, `Male finishers${clydW ? ` ≥${clydW} lbs` : ' in Clydesdale weight class'}, ranked by ${timeLabel}. Top ${dCly} awarded.`);
-      report(`${pfx}Athena`,     `Female finishers${athenaW ? ` ≥${athenaW} lbs` : ' in Athena weight class'}, ranked by ${timeLabel}. Top ${dCly} awarded.`);
+      resultCard(`${pfx}Clydesdale`, `Male finishers${clydW ? ` weighing <strong>≥${esc(clydW)} lbs</strong>` : ' in Clydesdale weight class'}, ranked by ${timeLabel}. Top <strong>${dCly}</strong> awarded.`);
+      resultCard(`${pfx}Athena`, `Female finishers${athenaW ? ` weighing <strong>≥${esc(athenaW)} lbs</strong>` : ' in Athena weight class'}, ranked by ${timeLabel}. Top <strong>${dCly}</strong> awarded.`);
     }
-
     allSpecial.forEach(cat =>
-      report(`${pfx}${cap(cat)} Results`, `${cap(cat)} category participants ranked by ${timeLabel}.`));
-
+      resultCard(`${pfx}${esc(cap(cat))} Results`, `${esc(cap(cat))} category participants ranked by ${timeLabel}.`));
     if (document.getElementById('chk_team')?.checked) {
       const method = v('teamScoringMethod') || 'configured method';
       const cats   = (v('teamCategories') || '').split(',').map(c => c.trim()).filter(Boolean);
-      if (cats.length) {
-        cats.forEach(tc => report(`${pfx}${tc} Team Results`, `Team rankings for "${tc}" using ${method}.`));
-      } else {
-        report(`${pfx}Team Results`, `Team rankings using ${method}.`);
-      }
+      if (cats.length)
+        cats.forEach(tc => resultCard(`${pfx}${esc(tc)} Team Results`, `Team rankings for <strong>${esc(tc)}</strong> using ${esc(method)}.`));
+      else
+        resultCard(`${pfx}Team Results`, `Team rankings using ${esc(method)}.`);
     }
-
     if (document.getElementById('chk_points')?.checked)
-      report(`${pfx}Points Series Standings`, `Cumulative series points standings.`);
-
-    if (multiContest && ci < contestCards.length - 1) blank();
+      resultCard(`${pfx}Points Series Standings`, `Cumulative series points standings for all participants.`);
+    if (multiContest && ci < contestCards.length - 1) out('<hr style="margin:0.875rem 0;border:none;border-top:1px solid var(--border)">');
   });
 
-  if (document.getElementById('res_no_double_dip')?.checked) {
-    blank();
-    push('  NOTE — No Double Dipping:');
-    push('    Participants placing in a higher-priority category are excluded from awards');
-    push('    in lower-priority categories. [TODO: RR14 configuration instructions TBD]');
-  }
-  blank();
-  push('════════════════════════════════════════════════');
-  push(`Total results / awards lists: ${n}`);
+  if (hasNoDblDip)
+    out('<div class="ph-box" style="margin-top:0.875rem"><strong>⚠️ No Double Dipping:</strong> Participants placing in a higher-priority category are excluded from awards in lower-priority categories. <strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP configuration instructions for double-dipping exclusion rules here.</div>');
+  out('<div class="ph-box" style="margin-top:0.75rem"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for results list naming, template assignment, and awards configuration here.</div>');
+  out(`<p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem">Total results / awards lists: <strong>${n}</strong></p>`);
+  out('</div>');
 
-  return L.join('\n');
+  // ── D. Scoring ─────────────────────────────────────────────────
+  const anyScoring = ['chk_points','chk_team','chk_ag','chk_wave'].some(id => document.getElementById(id)?.checked);
+  if (anyScoring) {
+    out('<div class="report-section">');
+    out('<h2>D. Scoring Configuration</h2>');
+    if (document.getElementById('chk_wave')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-bottom:0.375rem"><strong>Special Start Waves:</strong> ${esc(v('waveNotes') || 'Wave details TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for wave field configuration and time adjustment here.</div>');
+    }
+    if (document.getElementById('chk_ag')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Age-Graded %:</strong> Standard: ${esc(v('agStandard') || 'TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for age-grading field and formula configuration here.</div>');
+    }
+    if (document.getElementById('chk_team')?.checked) {
+      const method = v('teamScoringMethod') || 'TBD';
+      const sn     = v('teamScoringN');
+      const cats   = v('teamCategories');
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Team Scoring:</strong> ${esc(method)}${sn ? `, top ${esc(sn)} scorers` : ''}${cats ? ` | Categories: ${esc(cats)}` : ''}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for team field and scoring setup here.</div>');
+    }
+    if (document.getElementById('chk_points')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Points Series:</strong> ${esc(v('pointsFormula') || 'Formula TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for points field and series scoring here.</div>');
+    }
+    out('</div>');
+  }
+
+  return h.join('\n');
 }
 
 // ── Form submit ────────────────────────────────────────────────────
 document.getElementById('rr14Form').addEventListener('submit', (e) => {
   e.preventDefault();
   document.getElementById('promptOutput').textContent = buildPrompt();
-  document.getElementById('reportOutput').textContent = buildReport();
+  document.getElementById('reportOutput').innerHTML   = buildReport();
   const out = document.getElementById('outputSection');
   out.classList.add('visible');
   out.scrollIntoView({ behavior: 'smooth', block: 'start' });

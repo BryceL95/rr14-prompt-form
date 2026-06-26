@@ -339,6 +339,17 @@
         </div>
       </div>
 
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_no_double_dip" /> No Double Dipping</label>
+        <div class="option-settings" id="res_settings_no_double_dip">
+          <div class="field">
+            <label class="small-label">Double-dipping rules</label>
+            <!-- TODO: Add specific RR14 instructions for configuring double-dipping exclusion rules -->
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem">When enabled, a participant who places in a higher-priority category (e.g. Overall) will be excluded from awards in lower-priority categories (e.g. Age Group). Specific RR14 configuration instructions will be added here.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -413,14 +424,6 @@
       </div>
 
       <div class="option-card">
-        <label class="option-toggle"><input type="checkbox" id="chk_gun" value="gun_time" /> Gun time rankings</label>
-      </div>
-
-      <div class="option-card">
-        <label class="option-toggle"><input type="checkbox" id="chk_chip" value="chip_time" /> Chip time rankings</label>
-      </div>
-
-      <div class="option-card">
         <label class="option-toggle"><input type="checkbox" id="chk_ag" value="age_graded" /> Age-graded %</label>
         <div class="option-settings" id="scoring_settings_ag">
           <div class="field">
@@ -431,7 +434,7 @@
       </div>
 
       <div class="option-card">
-        <label class="option-toggle"><input type="checkbox" id="chk_wave" value="wave_adjusted" /> Wave-adjusted time</label>
+        <label class="option-toggle"><input type="checkbox" id="chk_wave" value="special_start_waves" /> Special Start Waves</label>
         <div class="option-settings" id="scoring_settings_wave">
           <div class="field">
             <label class="small-label">Wave assignment / notes</label>
@@ -521,6 +524,8 @@ const OPTION_TOGGLES = [
   ['res_grand_masters', 'res_settings_grand_masters'],
   ['res_juniors',       'res_settings_juniors'],
   ['res_clydesdale',    'res_settings_clydesdale'],
+  // Results (continued)
+  ['res_no_double_dip', 'res_settings_no_double_dip'],
   // Scoring
   ['chk_points', 'scoring_settings_points'],
   ['chk_team',   'scoring_settings_team'],
@@ -620,7 +625,6 @@ function addContest() {
         <div class="radio-group">
           <label><input type="radio" name="cTimingMethod_${id}" value="chip" checked /> Chip (net) time</label>
           <label><input type="radio" name="cTimingMethod_${id}" value="gun" /> Gun time</label>
-          <label><input type="radio" name="cTimingMethod_${id}" value="both" /> Both chip and gun</label>
         </div>
       </div>
       <div class="field">
@@ -790,7 +794,7 @@ function buildPrompt() {
       const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
       const cNote  = v(`cNotes_${cid}`);
       push(`\nContest ${i+1}: ${cName}`);
-      push(`  Timing method: ${cTiming === 'chip' ? 'Chip (net) time' : cTiming === 'gun' ? 'Gun time' : 'Both chip and gun time'}`);
+      push(`  Timing method: ${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}`);
       push('  Total distance defined by the last split point.');
 
       const splits = getContestSplits(cid);
@@ -881,6 +885,10 @@ function buildPrompt() {
       push(`  ${label}: not required`);
     }
   });
+  if (document.getElementById('res_no_double_dip')?.checked) {
+    push('  No double dipping: enabled — participants placed in a higher-priority category are excluded from awards in lower-priority categories.');
+    push('  [TODO: Insert specific RR14 double-dipping configuration instructions here]');
+  }
   blank();
 
   // Special rankings
@@ -892,7 +900,7 @@ function buildPrompt() {
 
   // Scoring
   push('── SCORING ───────────────────────────────────');
-  const scoringChecks = ['chk_points','chk_team','chk_gun','chk_chip','chk_ag','chk_wave']
+  const scoringChecks = ['chk_points','chk_team','chk_ag','chk_wave']
     .filter(id => document.getElementById(id)?.checked)
     .map(id => document.getElementById(id).value);
   push(`  Scoring types: ${scoringChecks.length ? scoringChecks.join(', ') : 'standard'}`);
@@ -979,7 +987,7 @@ function buildReport() {
   }
 
   const scoringFields = [];
-  if (document.getElementById('chk_wave')?.checked)   scoringFields.push('• wave — wave number (wave-adjusted time)');
+  if (document.getElementById('chk_wave')?.checked)   scoringFields.push('• wave — wave number (special start waves)');
   if (document.getElementById('chk_ag')?.checked)     scoringFields.push('• age_graded_pct — age-graded performance %');
   if (document.getElementById('chk_team')?.checked)   scoringFields.push('• team — team affiliation');
   if (document.getElementById('chk_points')?.checked) scoringFields.push('• points — series points earned');
@@ -999,7 +1007,7 @@ function buildReport() {
       const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
       const splits  = getContestSplits(cid);
       push(`  Contest ${ci+1}: ${cName}`);
-      push(`    Timing method : ${cTiming === 'chip' ? 'Chip (net) time' : cTiming === 'gun' ? 'Gun time' : 'Both chip and gun'}`);
+      push(`    Timing method : ${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}`);
       if (!splits.length) {
         push('    Splits        : none defined');
       } else {
@@ -1064,7 +1072,7 @@ function buildReport() {
     const cName = v(`cName_${cid}`) || `Contest ${ci+1}`;
     const pfx   = multiContest ? `[${cName}] ` : '';
     const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
-    const timeLabel = cTiming === 'both' ? 'chip/gun time' : cTiming === 'gun' ? 'gun time' : 'chip time';
+    const timeLabel = cTiming === 'gun' ? 'gun time' : 'chip time';
 
     if (multiContest) push(`  ── ${cName} ──`);
 
@@ -1129,6 +1137,12 @@ function buildReport() {
     if (multiContest && ci < contestCards.length - 1) blank();
   });
 
+  if (document.getElementById('res_no_double_dip')?.checked) {
+    blank();
+    push('  NOTE — No Double Dipping:');
+    push('    Participants placing in a higher-priority category are excluded from awards');
+    push('    in lower-priority categories. [TODO: RR14 configuration instructions TBD]');
+  }
   blank();
   push('════════════════════════════════════════════════');
   push(`Total results / awards lists: ${n}`);

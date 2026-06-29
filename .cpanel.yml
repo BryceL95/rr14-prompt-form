@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/public_html/projects/rr14form
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -r * $DEPLOYPATH

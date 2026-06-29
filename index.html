@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RR14 Event Configuration Form</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --border: #d1d5db;
+      --border-focus: #3b82f6;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --accent: #eff6ff;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5; padding: 2rem 1rem;
+    }
+
+    .page-header { max-width: 820px; margin: 0 auto 2rem; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem; }
+    .page-header p { color: var(--text-muted); font-size: 0.95rem; }
+
+    .form-container { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .section-header { background: var(--accent); border-bottom: 1px solid var(--border); padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 0.625rem; }
+    .section-header .section-num { background: var(--primary); color: #fff; border-radius: 50%; width: 1.5rem; height: 1.5rem; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .section-header h2 { font-size: 1rem; font-weight: 600; color: var(--primary); }
+    .section-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.125rem; }
+
+    .field { display: flex; flex-direction: column; gap: 0.375rem; }
+    label { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+    label .hint { font-weight: 400; color: var(--text-muted); font-size: 0.8rem; }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: 0.9rem; color: var(--text);
+      background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .radio-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .radio-group label {
+      display: flex; align-items: center; gap: 0.375rem; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.375rem 0.75rem; cursor: pointer; font-weight: 400; font-size: 0.875rem;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .radio-group label:hover { background: var(--accent); border-color: var(--border-focus); }
+    .radio-group input[type="radio"] { width: auto; accent-color: var(--primary); }
+
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .checkbox-group label {
+      display: flex; align-items: center; gap: 0.375rem; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.375rem 0.75rem; cursor: pointer; font-weight: 400; font-size: 0.875rem;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .checkbox-group label:hover { background: var(--accent); border-color: var(--border-focus); }
+    .checkbox-group input[type="checkbox"] { width: auto; accent-color: var(--primary); }
+
+    .dynamic-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    /* Timing point rows */
+    .timing-point-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .timing-point-row .field { flex: 1; }
+    .tp-remove-btn:disabled { opacity: 0.35; pointer-events: none; }
+
+    /* Contest cards */
+    .contest-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); overflow: hidden; }
+    .contest-card-header { background: #e0e7ff; padding: 0.5rem 0.875rem; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.875rem; color: #3730a3; }
+    .contest-card-body { padding: 0.875rem; display: flex; flex-direction: column; gap: 0.875rem; }
+
+    /* Split cards */
+    .split-card { border: 1px solid #c7d2fe; border-radius: var(--radius); background: #f5f3ff; overflow: hidden; }
+    .split-card-hd { display: flex; justify-content: space-between; align-items: center; padding: 0.375rem 0.75rem; background: #e0e7ff; font-size: 0.8rem; font-weight: 600; color: #4338ca; }
+    .split-card-bd { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.625rem; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+    @media (max-width: 540px) { .two-col { grid-template-columns: 1fr; } }
+    .inline-row { display: flex; gap: 0.375rem; }
+
+    /* Option cards — used for both results (step 4) and scoring (step 6) */
+    .option-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .option-toggle {
+      display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem 1rem;
+      background: var(--bg); cursor: pointer; font-weight: 500; font-size: 0.9rem;
+      transition: background 0.12s; user-select: none;
+    }
+    .option-toggle:hover { background: var(--accent); }
+    .option-toggle input[type="checkbox"] { width: auto; accent-color: var(--primary); }
+    .option-settings { display: none; padding: 0.875rem 1rem; border-top: 1px solid var(--border); background: #fff; }
+    .settings-row { display: flex; flex-wrap: wrap; gap: 0.875rem; }
+    .settings-row .field { flex: 1; min-width: 140px; }
+    .gender-group-label {
+      display: flex; align-items: center; gap: 0.375rem;
+      font-weight: 400; font-size: 0.875rem; cursor: pointer;
+    }
+    .gender-group-label input[type="checkbox"] { width: auto; accent-color: var(--primary); }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 1rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: background 0.15s, transform 0.1s; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn-outline:hover { background: var(--accent); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 0.25rem 0.625rem; font-size: 0.8rem; }
+    .btn-danger:hover { background: #fef2f2; }
+    .btn-add { background: #f0fdf4; color: #166534; border: 1px dashed #86efac; }
+    .btn-add:hover { background: #dcfce7; border-color: var(--success); }
+
+    /* Tag input */
+    .tag-input-wrapper { display: flex; flex-wrap: wrap; gap: 0.375rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.375rem 0.625rem; background: #fff; min-height: 2.4rem; cursor: text; transition: border-color 0.15s, box-shadow 0.15s; }
+    .tag-input-wrapper:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .tag { display: inline-flex; align-items: center; gap: 0.25rem; background: #dbeafe; color: #1e40af; border-radius: 4px; padding: 0.125rem 0.5rem; font-size: 0.8rem; font-weight: 500; }
+    .tag button { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.75rem; line-height: 1; padding: 0; opacity: 0.7; }
+    .tag button:hover { opacity: 1; }
+    .tag-input-wrapper input { border: none; outline: none; flex: 1; min-width: 80px; font-size: 0.875rem; padding: 0; background: transparent; }
+
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding-top: 0.5rem; }
+
+    /* Output */
+    .output-section { max-width: 820px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; display: none; }
+    .output-section.visible { display: block; }
+    .output-header { background: #f0fdf4; border-bottom: 1px solid #86efac; padding: 0.75rem 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .tab-bar { display: flex; gap: 0.25rem; }
+    .tab-btn { padding: 0.375rem 0.875rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); font-size: 0.875rem; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: background 0.12s, color 0.12s, border-color 0.12s; }
+    .tab-btn:hover { background: var(--accent); color: var(--primary); border-color: var(--border-focus); }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .output-body { padding: 1.25rem; }
+    .tab-panel pre { white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.85rem; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; max-height: 560px; overflow-y: auto; line-height: 1.6; }
+    .copy-notice { font-size: 0.8rem; color: var(--success); display: none; }
+    .copy-notice.show { display: inline; }
+
+    .required-star { color: var(--danger); }
+    .section-note { font-size: 0.8rem; color: var(--text-muted); background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; }
+    .small-label { font-weight: 400; font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── HTML Configuration Report ───────────────────────────────── */
+    .html-report { font-size: 0.9rem; }
+    .html-report h1 { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
+    .html-report .report-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--border); }
+    .html-report .report-section { margin-bottom: 2rem; }
+    .html-report .report-section h2 { font-size: 0.95rem; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 0.35rem; margin-bottom: 1rem; letter-spacing: 0.01em; }
+    .html-report .report-section h3 { font-size: 0.875rem; font-weight: 600; color: #374151; margin: 0.875rem 0 0.5rem; }
+    .html-report table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 0.75rem; }
+    .html-report th { background: var(--accent); color: var(--primary); font-weight: 600; text-align: left; padding: 0.45rem 0.75rem; border: 1px solid var(--border); }
+    .html-report td { padding: 0.45rem 0.75rem; border: 1px solid var(--border); vertical-align: top; }
+    .html-report tr:nth-child(even) td { background: #f9fafb; }
+    /* Split flow diagram */
+    .split-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 0.625rem 0 0.875rem; }
+    .split-node { background: var(--primary); color: #fff; border-radius: 6px; padding: 0.375rem 0.625rem; font-size: 0.78rem; font-weight: 600; text-align: center; line-height: 1.3; }
+    .split-node.race-start { background: #059669; }
+    .split-node.finish-node { background: #dc2626; }
+    .split-arrow { color: var(--text-muted); font-size: 1.1rem; padding: 0 0.2rem; display: flex; align-items: center; }
+    /* Result cards */
+    .result-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 0.5rem; }
+    .result-card-hd { background: var(--accent); padding: 0.45rem 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
+    .result-card-num { background: var(--primary); color: #fff; border-radius: 50%; width: 1.35rem; height: 1.35rem; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .result-card-name { font-weight: 600; font-size: 0.875rem; color: var(--primary); }
+    .result-card-bd { padding: 0.45rem 0.875rem; font-size: 0.83rem; color: var(--text-muted); }
+    /* Placeholder / TODO boxes */
+    .ph-box { background: #fffbeb; border: 1px dashed #f59e0b; border-radius: 6px; padding: 0.45rem 0.75rem; font-size: 0.8rem; color: #92400e; margin-top: 0.75rem; }
+    .ph-box strong { color: #b45309; }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>RR14 Event Configuration</h1>
+  <p>Answer the questions below to generate a configuration prompt for your RR14 event file.</p>
+</div>
+
+<form id="rr14Form" class="form-container" novalidate>
+
+  <!-- ── 1: Event Basics ──────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">1</span><h2>Event Basics</h2></div>
+    <div class="section-body">
+      <div class="two-col">
+        <div class="field">
+          <label for="eventName">Event name <span class="required-star">*</span></label>
+          <input type="text" id="eventName" placeholder="e.g. Springfield City 5K" required />
+        </div>
+        <div class="field">
+          <label for="eventDate">Event date</label>
+          <input type="text" id="eventDate" placeholder="e.g. 2025-09-20" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="eventNotes">General notes <span class="hint">(optional context for the AI)</span></label>
+        <textarea id="eventNotes" placeholder="e.g. multi-wave start, chip timing, 800 expected finishers…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2: Timing Points ─────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">2</span><h2>Timing Points</h2></div>
+    <div class="section-body">
+      <p class="section-note">Physical locations on course where raw timing data is collected. A timing point can serve multiple roles — for example a single mat at the start/finish line. At least one timing point is required.</p>
+      <div id="timingPointList" class="dynamic-list"></div>
+      <button type="button" class="btn btn-add" onclick="addTimingPoint()">+ Add Timing Point</button>
+    </div>
+  </div>
+
+  <!-- ── 3: Contests & Splits ─────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">3</span><h2>Contests &amp; Splits</h2></div>
+    <div class="section-body">
+      <p class="section-note">Add one entry per contest. The <strong>last split defines the finish / total distance</strong>. Each split references a timing point defined in Step 2.</p>
+      <div id="contestList" class="dynamic-list"></div>
+      <button type="button" class="btn btn-add" onclick="addContest()">+ Add Contest</button>
+    </div>
+  </div>
+
+  <!-- ── 4: Results ───────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">4</span><h2>Results Configuration</h2></div>
+    <div class="section-body">
+      <p class="section-note">Check each result category needed. Settings for that category appear below the checkbox. "Group by gender" produces <strong>one list</strong> with male and female ranked independently within it — not two separate lists.</p>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_overall" checked /> Overall</label>
+        <div class="option-settings" id="res_settings_overall">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Awards depth (places)</label>
+              <input type="number" id="depthOverall" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_gender_overall" checked /> Gender Overall</label>
+        <div class="option-settings" id="res_settings_gender_overall">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Awards depth per gender group</label>
+              <input type="number" id="depthGenderOverall" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_age_group" /> Age Group</label>
+        <div class="option-settings" id="res_settings_age_group">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Age brackets <span class="hint">(comma-separated)</span></label>
+              <input type="text" id="ageGroupBrackets" placeholder="0-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-69, 70+" />
+            </div>
+          </div>
+          <div class="settings-row" style="margin-top:0.625rem">
+            <div class="field">
+              <label class="small-label">Awards depth per bracket</label>
+              <input type="number" id="depthAgeGroup" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+            <div class="field" style="padding-top:1.25rem">
+              <label class="gender-group-label">
+                <input type="checkbox" id="agGenderGroup" /> Group by gender within list
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_masters" /> Masters</label>
+        <div class="option-settings" id="res_settings_masters">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Minimum age</label>
+              <input type="number" id="mastersAge" placeholder="40" min="1" max="99" style="max-width:100px" />
+            </div>
+            <div class="field">
+              <label class="small-label">Awards depth</label>
+              <input type="number" id="depthMasters" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+            <div class="field" style="padding-top:1.25rem">
+              <label class="gender-group-label">
+                <input type="checkbox" id="mastersGenderGroup" /> Group by gender within list
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_grand_masters" /> Grand Masters</label>
+        <div class="option-settings" id="res_settings_grand_masters">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Minimum age</label>
+              <input type="number" id="grandMastersAge" placeholder="60" min="1" max="99" style="max-width:100px" />
+            </div>
+            <div class="field">
+              <label class="small-label">Awards depth</label>
+              <input type="number" id="depthGrandMasters" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+            <div class="field" style="padding-top:1.25rem">
+              <label class="gender-group-label">
+                <input type="checkbox" id="grandMastersGenderGroup" /> Group by gender within list
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_juniors" /> Juniors</label>
+        <div class="option-settings" id="res_settings_juniors">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Maximum age</label>
+              <input type="number" id="juniorsMaxAge" placeholder="19" min="1" max="99" style="max-width:100px" />
+            </div>
+            <div class="field">
+              <label class="small-label">Awards depth</label>
+              <input type="number" id="depthJuniors" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+            <div class="field" style="padding-top:1.25rem">
+              <label class="gender-group-label">
+                <input type="checkbox" id="juniorsGenderGroup" /> Group by gender within list
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_clydesdale" /> Clydesdale / Athena</label>
+        <div class="option-settings" id="res_settings_clydesdale">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Clydesdale min weight (lbs)</label>
+              <input type="number" id="clydWeight" placeholder="220" min="1" style="max-width:120px" />
+            </div>
+            <div class="field">
+              <label class="small-label">Athena min weight (lbs)</label>
+              <input type="number" id="athenaWeight" placeholder="165" min="1" style="max-width:120px" />
+            </div>
+            <div class="field">
+              <label class="small-label">Awards depth</label>
+              <input type="number" id="depthClydesdale" placeholder="3" min="1" style="max-width:100px" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="res_no_double_dip" /> No Double Dipping</label>
+        <div class="option-settings" id="res_settings_no_double_dip">
+          <div class="field">
+            <label class="small-label">Double-dipping rules</label>
+            <!-- TODO: Add specific RR14 instructions for configuring double-dipping exclusion rules -->
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem">When enabled, a participant who places in a higher-priority category (e.g. Overall) will be excluded from awards in lower-priority categories (e.g. Age Group). Specific RR14 configuration instructions will be added here.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 5: Special Rankings ──────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">5</span><h2>Special Rankings</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Predefined special categories</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="chk_stroller" value="stroller" /> Stroller</label>
+          <label><input type="checkbox" id="chk_dog" value="dog" /> Dog / Leash</label>
+          <label><input type="checkbox" id="chk_wheelchair" value="wheelchair" /> Wheelchair</label>
+          <label><input type="checkbox" id="chk_handcycle" value="handcycle" /> Handcycle</label>
+          <label><input type="checkbox" id="chk_military" value="military" /> Military / First Responder</label>
+          <label><input type="checkbox" id="chk_costume" value="costume" /> Costume</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Custom special rankings <span class="hint">(type name, press Enter)</span></label>
+        <div class="tag-input-wrapper" id="customRankingsWrapper" onclick="document.getElementById('customRankingInput').focus()">
+          <input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="specialRankingNotes">Notes on special rankings</label>
+        <textarea id="specialRankingNotes" placeholder="e.g. Stroller participants not eligible for age group awards…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6: Scoring ───────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">6</span><h2>Special Scoring Requirements</h2></div>
+    <div class="section-body">
+      <p class="section-note">Check each scoring feature needed. Settings for that feature appear below the checkbox.</p>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_points" value="points_series" /> Points series (season-long)</label>
+        <div class="option-settings" id="scoring_settings_points">
+          <div class="field">
+            <label class="small-label">Points formula / series description</label>
+            <textarea id="pointsFormula" placeholder="e.g. 100 pts for 1st, 99 for 2nd… or describe the series rules"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_team" value="team_scores" /> Team scores</label>
+        <div class="option-settings" id="scoring_settings_team">
+          <div class="settings-row">
+            <div class="field">
+              <label class="small-label">Scoring method</label>
+              <select id="teamScoringMethod">
+                <option value="">-- select --</option>
+                <option value="low_score">Low score (place-based)</option>
+                <option value="cumulative_time">Cumulative time</option>
+                <option value="average_time">Average time</option>
+                <option value="top_n">Top N finishers</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="small-label">Scorers per team</label>
+              <input type="number" id="teamScoringN" placeholder="5" min="1" style="max-width:90px" />
+            </div>
+          </div>
+          <div class="field" style="margin-top:0.5rem">
+            <label class="small-label">Team categories <span class="hint">(open, masters, mixed…)</span></label>
+            <input type="text" id="teamCategories" placeholder="e.g. Open Men, Open Women, Mixed, Masters" />
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_ag" value="age_graded" /> Age-graded %</label>
+        <div class="option-settings" id="scoring_settings_ag">
+          <div class="field">
+            <label class="small-label">Age-grading standard</label>
+            <input type="text" id="agStandard" placeholder="e.g. WMA 2015, USATF" />
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_wave" value="special_start_waves" /> Special Start Waves</label>
+        <div class="option-settings" id="scoring_settings_wave">
+          <div class="field">
+            <label class="small-label">Wave assignment / notes</label>
+            <textarea id="waveNotes" placeholder="e.g. waves assigned by estimated finish time, 5-minute intervals…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="scoringNotes">Additional scoring notes</label>
+        <textarea id="scoringNotes" placeholder="e.g. ties broken by gun time, minimum 3 scorers required…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 7: Extra Features ───────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">7</span><h2>Extra Features</h2></div>
+    <div class="section-body">
+      <p class="section-note">Enable additional RR14 features needed for this event.</p>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_presenter" /> Presenter</label>
+        <div class="option-settings" id="extra_settings_presenter">
+          <div class="field">
+            <label class="small-label">Views to configure</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="presenter_live_results" /> Live Results</label>
+              <label><input type="checkbox" id="presenter_announcer_feed" /> Announcer Feed</label>
+              <label><input type="checkbox" id="presenter_leaderboard" /> Leaderboard</label>
+            </div>
+          </div>
+          <div class="field" style="margin-top:0.5rem">
+            <label class="small-label">Presenter notes</label>
+            <textarea id="presenterNotes" placeholder="e.g. display top 10 overall, refresh every 30 seconds…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_kiosk" /> Check In Kiosk</label>
+        <div class="option-settings" id="extra_settings_kiosk">
+          <div class="field">
+            <label class="small-label">Kiosk functions</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="kiosk_checkin" /> Participant Check-In</label>
+              <label><input type="checkbox" id="kiosk_bib" /> Bib Assignment</label>
+              <label><input type="checkbox" id="kiosk_transponder" /> Transponder Assignment</label>
+            </div>
+          </div>
+          <div class="field" style="margin-top:0.5rem">
+            <label class="small-label">Kiosk notes</label>
+            <textarea id="kioskNotes" placeholder="e.g. number of stations, self-service vs. staffed…"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 8: Additional ────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">8</span><h2>Additional Requirements</h2></div>
+    <div class="section-body">
+      <div class="field">
+        <label for="additionalNotes">Anything else the AI should know?</label>
+        <textarea id="additionalNotes" style="min-height:120px" placeholder="e.g. bib ranges per contest, relay legs, cut-off times, virtual participants, import/export formats…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Actions ───────────────────────────────────────────────────── -->
+  <div class="actions">
+    <div style="display:flex;gap:0.5rem">
+      <button type="button" class="btn btn-outline" onclick="exportSettings()">Export Settings</button>
+      <label class="btn btn-outline" style="cursor:pointer">Import Settings<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importSettings(this)" /></label>
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button type="button" class="btn btn-outline" onclick="resetForm()">Clear Form</button>
+      <button type="submit" class="btn btn-primary">Generate Prompt &amp; Report</button>
+    </div>
+  </div>
+
+</form>
+
+<!-- ── Output ────────────────────────────────────────────────────── -->
+<div class="output-section" id="outputSection">
+  <div class="output-header">
+    <div class="tab-bar">
+      <button type="button" class="tab-btn active" onclick="switchTab('prompt',this)">LLM Prompt</button>
+      <button type="button" class="tab-btn" onclick="switchTab('report',this)">Configuration Report</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span class="copy-notice" id="copyNotice">Copied!</span>
+      <button type="button" class="btn btn-outline" onclick="copyOutput()">Copy to Clipboard</button>
+    </div>
+  </div>
+  <div class="output-body">
+    <div id="tab-prompt" class="tab-panel"><pre id="promptOutput"></pre></div>
+    <div id="tab-report" class="tab-panel" style="display:none"><div id="reportOutput" class="html-report"></div></div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let contestCount    = 0;
+let timingPointCount = 0;
+let splitCounts     = {};
+let timingPointsData = {}; // id -> name string
+const customRankings = [];
+let activeTab = 'prompt';
+
+// ── Helpers ────────────────────────────────────────────────────────
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function getRadioValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+function getSpecialCategories() {
+  const pre = ['stroller','dog','wheelchair','handcycle','military','costume']
+    .filter(k => document.getElementById(`chk_${k}`)?.checked);
+  return [...pre, ...customRankings];
+}
+function getContestSplits(cid) {
+  return [...document.querySelectorAll('.split-card')]
+    .filter(el => el.id.startsWith(`split_${cid}_`));
+}
+
+// ── Option-card toggles (Results + Scoring) ────────────────────────
+const OPTION_TOGGLES = [
+  // Results
+  ['res_overall',       'res_settings_overall'],
+  ['res_gender_overall','res_settings_gender_overall'],
+  ['res_age_group',     'res_settings_age_group'],
+  ['res_masters',       'res_settings_masters'],
+  ['res_grand_masters', 'res_settings_grand_masters'],
+  ['res_juniors',       'res_settings_juniors'],
+  ['res_clydesdale',    'res_settings_clydesdale'],
+  // Results (continued)
+  ['res_no_double_dip', 'res_settings_no_double_dip'],
+  // Scoring
+  ['chk_points', 'scoring_settings_points'],
+  ['chk_team',   'scoring_settings_team'],
+  ['chk_ag',     'scoring_settings_ag'],
+  ['chk_wave',   'scoring_settings_wave'],
+  // Extra Features
+  ['chk_presenter', 'extra_settings_presenter'],
+  ['chk_kiosk',     'extra_settings_kiosk'],
+];
+
+OPTION_TOGGLES.forEach(([chkId, settId]) => {
+  const chk  = document.getElementById(chkId);
+  const sett = document.getElementById(settId);
+  if (!chk || !sett) return;
+  sett.style.display = chk.checked ? 'block' : 'none';
+  chk.addEventListener('change', () => { sett.style.display = chk.checked ? 'block' : 'none'; });
+});
+
+// ── Timing Points ──────────────────────────────────────────────────
+function addTimingPoint() {
+  timingPointCount++;
+  const id = timingPointCount;
+  timingPointsData[id] = '';
+
+  const row = document.createElement('div');
+  row.className = 'timing-point-row';
+  row.id = `tp_${id}`;
+  row.innerHTML = `
+    <div class="field">
+      <label style="font-size:0.8rem">Name / location</label>
+      <input type="text" id="tpName_${id}" placeholder="e.g. Start Mat, Mile 1 Wand, Finish Line" />
+    </div>
+    <button type="button" class="btn btn-danger tp-remove-btn" onclick="removeTimingPoint(${id})">✕</button>`;
+  document.getElementById('timingPointList').appendChild(row);
+
+  const input = document.getElementById(`tpName_${id}`);
+  input.addEventListener('input', () => {
+    timingPointsData[id] = input.value.trim();
+    updateAllSplitTimingSelects();
+  });
+
+  updateTimingRemoveButtons();
+  // No select update needed — blank name entries are filtered out
+}
+
+function removeTimingPoint(id) {
+  const count = document.querySelectorAll('.timing-point-row').length;
+  if (count <= 1) return;
+  delete timingPointsData[id];
+  document.getElementById(`tp_${id}`)?.remove();
+  updateAllSplitTimingSelects();
+  updateTimingRemoveButtons();
+}
+
+function updateTimingRemoveButtons() {
+  const count = document.querySelectorAll('.timing-point-row').length;
+  document.querySelectorAll('.tp-remove-btn').forEach(btn => {
+    btn.disabled = count <= 1;
+  });
+}
+
+function updateAllSplitTimingSelects() {
+  const named = Object.entries(timingPointsData)
+    .filter(([, name]) => name)
+    .sort(([a], [b]) => Number(a) - Number(b));
+
+  document.querySelectorAll('.split-timing-select').forEach(sel => {
+    const selectedId = [...sel.options].find(o => o.selected && o.dataset.tpId)?.dataset.tpId || '';
+    sel.innerHTML = '<option value="" data-tp-id="">-- select --</option>';
+    named.forEach(([id, name]) => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      opt.dataset.tpId = String(id);
+      if (String(id) === selectedId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ── Split discipline change ────────────────────────────────────────
+function onSplitDiscChange(contestId, sid) {
+  const disc      = document.getElementById(`sDisc_${contestId}_${sid}`)?.value;
+  const distInput = document.getElementById(`sDist_${contestId}_${sid}`);
+  const unitSel   = document.getElementById(`sUnit_${contestId}_${sid}`);
+  const isStart   = disc === 'race_start';
+  if (distInput) {
+    if (isStart) distInput.value = '0';
+    distInput.disabled = isStart;
+    distInput.style.opacity = isStart ? '0.45' : '';
+  }
+  if (unitSel) {
+    unitSel.disabled = isStart;
+    unitSel.style.opacity = isStart ? '0.45' : '';
+  }
+}
+
+// ── Contests ───────────────────────────────────────────────────────
+function addContest() {
+  contestCount++;
+  const id = contestCount;
+  const card = document.createElement('div');
+  card.className = 'contest-card';
+  card.id = `contest_${id}`;
+  card.innerHTML = `
+    <div class="contest-card-header">
+      <span>Contest ${id}</span>
+      <button type="button" class="btn btn-danger" onclick="removeContest(${id})">Remove</button>
+    </div>
+    <div class="contest-card-body">
+      <div class="field">
+        <label>Contest name <span class="required-star">*</span></label>
+        <input type="text" id="cName_${id}" placeholder="e.g. Sprint Triathlon, 5K Run" />
+      </div>
+      <div class="field">
+        <label>Timing method</label>
+        <div class="radio-group">
+          <label><input type="radio" name="cTimingMethod_${id}" value="chip" checked /> Chip (net) time</label>
+          <label><input type="radio" name="cTimingMethod_${id}" value="gun" /> Gun time</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Split points <span class="hint">(last split = finish / total distance)</span></label>
+        <div id="splitList_${id}" class="dynamic-list"></div>
+        <button type="button" class="btn btn-add" onclick="addSplit(${id})" style="margin-top:0.375rem">+ Add Split</button>
+      </div>
+      <div class="field">
+        <label>Contest-specific notes</label>
+        <textarea id="cNotes_${id}" rows="2" placeholder="e.g. wave start, bib range 1001-2000…"></textarea>
+      </div>
+    </div>`;
+  document.getElementById('contestList').appendChild(card);
+}
+
+function removeContest(id) {
+  document.getElementById(`contest_${id}`)?.remove();
+}
+
+// ── Splits ─────────────────────────────────────────────────────────
+function addSplit(contestId) {
+  if (!splitCounts[contestId]) splitCounts[contestId] = 0;
+  splitCounts[contestId]++;
+  const sid = splitCounts[contestId];
+
+  const card = document.createElement('div');
+  card.className = 'split-card';
+  card.id = `split_${contestId}_${sid}`;
+  card.innerHTML = `
+    <div class="split-card-hd">
+      <span>Split ${sid}</span>
+      <button type="button" class="btn btn-danger" onclick="removeSplit(${contestId},${sid})">✕ Remove</button>
+    </div>
+    <div class="split-card-bd">
+      <div class="two-col">
+        <div class="field">
+          <label style="font-size:0.8rem">Name</label>
+          <input type="text" id="sName_${contestId}_${sid}" placeholder="e.g. Swim Finish, T1, Bike Finish, Finish" />
+        </div>
+        <div class="field">
+          <label style="font-size:0.8rem">Discipline</label>
+          <select id="sDisc_${contestId}_${sid}" onchange="onSplitDiscChange(${contestId},${sid})">
+            <option value="race_start">Race Start</option>
+            <option value="running">Running</option>
+            <option value="cycling">Cycling</option>
+            <option value="swimming">Swimming</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label style="font-size:0.8rem">Distance from start</label>
+          <div class="inline-row">
+            <input type="number" id="sDist_${contestId}_${sid}" placeholder="0.0" min="0" step="any" />
+            <select id="sUnit_${contestId}_${sid}">
+              <option value="miles">mi</option>
+              <option value="km">km</option>
+              <option value="meters">m</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label style="font-size:0.8rem">Timing point used</label>
+          <select id="sTimingPt_${contestId}_${sid}" class="split-timing-select">
+            <option value="" data-tp-id="">-- select --</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById(`splitList_${contestId}`).appendChild(card);
+  updateAllSplitTimingSelects();
+  onSplitDiscChange(contestId, sid); // apply race_start greying if default
+}
+
+function removeSplit(contestId, sid) {
+  document.getElementById(`split_${contestId}_${sid}`)?.remove();
+}
+
+// ── Tag input (custom rankings) ────────────────────────────────────
+function wireTagInput(inputId, wrapperId, store) {
+  const input   = document.getElementById(inputId);
+  const wrapper = document.getElementById(wrapperId);
+  if (!input || !wrapper) return;
+  input.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+      e.preventDefault();
+      const val = input.value.trim().replace(/,+$/, '');
+      if (val && !store.includes(val)) {
+        store.push(val);
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.dataset.value = val;
+        tag.innerHTML = `${escHtml(val)} <button type="button" title="remove">✕</button>`;
+        tag.querySelector('button').addEventListener('click', () => {
+          const idx = store.indexOf(val);
+          if (idx > -1) store.splice(idx, 1);
+          tag.remove();
+        });
+        wrapper.insertBefore(tag, input);
+      }
+      input.value = '';
+    }
+  });
+}
+wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+
+// ── Tab switching ──────────────────────────────────────────────────
+function switchTab(name, btn) {
+  activeTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).style.display = 'block';
+  btn.classList.add('active');
+}
+
+function copyOutput() {
+  const el   = document.getElementById(activeTab === 'prompt' ? 'promptOutput' : 'reportOutput');
+  const text = activeTab === 'prompt' ? el.textContent : el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const notice = document.getElementById('copyNotice');
+    notice.classList.add('show');
+    setTimeout(() => notice.classList.remove('show'), 2000);
+  });
+}
+
+// ── Build LLM Prompt ───────────────────────────────────────────────
+function buildPrompt() {
+  const L = [];
+  const push  = s => L.push(s);
+  const blank = () => L.push('');
+
+  push('You are an expert in race timing software configuration, specifically RR14 (Race Result 14).');
+  push('Using the event details below, generate a complete, well-structured RR14 event file configuration.');
+  push('Include all necessary settings for contests, timing points, split points, results lists, and scoring.');
+  blank();
+  push('════════════════════════════════════════════════');
+  push('EVENT DETAILS');
+  push('════════════════════════════════════════════════');
+  blank();
+
+  push(`Event Name: ${v('eventName') || '(not specified)'}`);
+  const ed = v('eventDate'); if (ed) push(`Event Date: ${ed}`);
+  const en = v('eventNotes'); if (en) push(`General Notes: ${en}`);
+  blank();
+
+  // Timing Points
+  push('── TIMING POINTS ─────────────────────────────');
+  const tpRows = [...document.querySelectorAll('.timing-point-row')];
+  if (!tpRows.length) {
+    push('  (none defined)');
+  } else {
+    tpRows.forEach(row => {
+      const tid  = row.id.replace('tp_', '');
+      const name = v(`tpName_${tid}`) || '(unnamed)';
+      push(`  - ${name}`);
+    });
+  }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — TIMING POINTS]');
+  push('Timing point names should always be all capital letters. A color can be specified for each timing point. Lighter colors are better for easier readability with black text.');
+  blank();
+
+  // Contests
+  push('── CONTESTS ──────────────────────────────────');
+  const contestCards = [...document.querySelectorAll('.contest-card')];
+  if (!contestCards.length) {
+    push('  (none defined)');
+  } else {
+    contestCards.forEach((card, i) => {
+      const cid    = card.id.replace('contest_', '');
+      const cName  = v(`cName_${cid}`) || `Contest ${i+1}`;
+      const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
+      const cNote  = v(`cNotes_${cid}`);
+      push(`\nContest ${i+1}: ${cName}`);
+      push(`  Timing method: ${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}`);
+      push('  Total distance defined by the last split point.');
+
+      const splits = getContestSplits(cid);
+      if (splits.length) {
+        push('  Split Points:');
+        splits.forEach((row, si) => {
+          const sid    = row.id.split('_').pop();
+          const sName  = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+          const sDist  = v(`sDist_${cid}_${sid}`);
+          const sUnit  = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+          const sTp    = v(`sTimingPt_${cid}_${sid}`);
+          const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+          const isLast = si === splits.length - 1;
+          let line = `    ${si+1}. ${sName}${isLast ? ' [FINISH]' : ''} — ${sDisc}`;
+          if (sDist) line += `, ${sDist} ${sUnit} from start`;
+          if (sTp)   line += ` (timing point: ${sTp})`;
+          push(line);
+        });
+      } else {
+        push('  Split Points: none defined');
+      }
+      if (cNote) push(`  Notes: ${cNote}`);
+    });
+  }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — CONTESTS & SPLITS]');
+  push('// TODO: Add RR14 MCP instructions for contest and split point configuration here.');
+  blank();
+
+  // Results
+  push('── RESULTS CONFIGURATION ─────────────────────');
+  const resMap = [
+    ['res_overall',       'Overall',          () => {
+      const d = v('depthOverall');
+      return d ? `awards depth: ${d}` : '';
+    }],
+    ['res_gender_overall','Gender Overall',    () => {
+      const d = v('depthGenderOverall');
+      const parts = ['single list, results ranked within each gender group'];
+      if (d) parts.push(`depth: ${d} per gender`);
+      return parts.join(', ');
+    }],
+    ['res_age_group',     'Age Group',         () => {
+      const b = v('ageGroupBrackets'), d = v('depthAgeGroup');
+      const gg = document.getElementById('agGenderGroup')?.checked;
+      const parts = [];
+      if (b)  parts.push(`brackets: ${b}`);
+      if (d)  parts.push(`depth: ${d}`);
+      if (gg) parts.push('gender grouping within each bracket list');
+      return parts.join(', ');
+    }],
+    ['res_masters',       'Masters',           () => {
+      const age = v('mastersAge') || '40', d = v('depthMasters');
+      const gg  = document.getElementById('mastersGenderGroup')?.checked;
+      const parts = [`min age: ${age}`];
+      if (d)  parts.push(`depth: ${d}`);
+      if (gg) parts.push('gender grouping within list');
+      return parts.join(', ');
+    }],
+    ['res_grand_masters', 'Grand Masters',     () => {
+      const age = v('grandMastersAge') || '60', d = v('depthGrandMasters');
+      const gg  = document.getElementById('grandMastersGenderGroup')?.checked;
+      const parts = [`min age: ${age}`];
+      if (d)  parts.push(`depth: ${d}`);
+      if (gg) parts.push('gender grouping within list');
+      return parts.join(', ');
+    }],
+    ['res_juniors',       'Juniors',           () => {
+      const age = v('juniorsMaxAge') || '19', d = v('depthJuniors');
+      const gg  = document.getElementById('juniorsGenderGroup')?.checked;
+      const parts = [`max age: ${age}`];
+      if (d)  parts.push(`depth: ${d}`);
+      if (gg) parts.push('gender grouping within list');
+      return parts.join(', ');
+    }],
+    ['res_clydesdale',   'Clydesdale/Athena', () => {
+      const cw = v('clydWeight'), aw = v('athenaWeight'), d = v('depthClydesdale');
+      const parts = [];
+      if (cw) parts.push(`Clydesdale ≥${cw} lbs`);
+      if (aw) parts.push(`Athena ≥${aw} lbs`);
+      if (d)  parts.push(`depth: ${d}`);
+      return parts.join(', ');
+    }],
+  ];
+  resMap.forEach(([id, label, detail]) => {
+    const chk = document.getElementById(id);
+    if (chk?.checked) {
+      const d = detail();
+      push(`  ${label}: enabled${d ? ` (${d})` : ''}`);
+    } else {
+      push(`  ${label}: not required`);
+    }
+  });
+  if (document.getElementById('res_no_double_dip')?.checked) {
+    push('  No double dipping: enabled — participants placed in a higher-priority category are excluded from awards in lower-priority categories.');
+  }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — RESULTS CONFIGURATION]');
+  push('// TODO: Add RR14 MCP instructions for results lists, report templates, and awards setup here.');
+  blank();
+
+  // Special rankings
+  push('── SPECIAL RANKINGS ──────────────────────────');
+  const allSpecial = getSpecialCategories();
+  push(`  Special categories: ${allSpecial.length ? allSpecial.join(', ') : 'none'}`);
+  const rn = v('specialRankingNotes'); if (rn) push(`  Notes: ${rn}`);
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — SPECIAL RANKINGS]');
+  push('Double Dipping: When double dipping is enabled, the Awards Depth value specifies the number of participants to exclude from the next ranking. This can be done using [RankX]>[AwardsDepth] in the filter where X represents the ID of the previous Ranking and AwardsDepth represents the specified depth for that ranking. Often, User Defined Functions are created, one per ranking to specify if someone is an awards winner or not for the given ranking.');
+  blank();
+
+  // Scoring
+  push('── SCORING ───────────────────────────────────');
+  const scoringChecks = ['chk_points','chk_team','chk_ag','chk_wave']
+    .filter(id => document.getElementById(id)?.checked)
+    .map(id => document.getElementById(id).value);
+  push(`  Scoring types: ${scoringChecks.length ? scoringChecks.join(', ') : 'standard'}`);
+
+  if (document.getElementById('chk_team')?.checked) {
+    const method = v('teamScoringMethod'), n = v('teamScoringN'), cats = v('teamCategories');
+    if (method) push(`  Team scoring method: ${method}`);
+    if (n)      push(`  Scorers per team: ${n}`);
+    if (cats)   push(`  Team categories: ${cats}`);
+  }
+  if (document.getElementById('chk_points')?.checked) {
+    const f = v('pointsFormula'); if (f) push(`  Points formula: ${f}`);
+  }
+  if (document.getElementById('chk_ag')?.checked) {
+    const s = v('agStandard'); if (s) push(`  Age-grading standard: ${s}`);
+  }
+  if (document.getElementById('chk_wave')?.checked) {
+    const wn = v('waveNotes'); if (wn) push(`  Wave assignment: ${wn}`);
+  }
+  const sn = v('scoringNotes'); if (sn) push(`  Additional notes: ${sn}`);
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — SCORING]');
+  push('// TODO: Add RR14 MCP instructions for scoring configuration here.');
+  blank();
+
+  // Extra Features
+  push('── EXTRA FEATURES ────────────────────────────');
+  const presenterOn = document.getElementById('chk_presenter')?.checked;
+  const kioskOn     = document.getElementById('chk_kiosk')?.checked;
+  if (presenterOn) {
+    const views = [];
+    if (document.getElementById('presenter_live_results')?.checked)  views.push('Live Results');
+    if (document.getElementById('presenter_announcer_feed')?.checked) views.push('Announcer Feed');
+    if (document.getElementById('presenter_leaderboard')?.checked)    views.push('Leaderboard');
+    push(`  Presenter: enabled${views.length ? ` (${views.join(', ')})` : ''}`);
+    const pn = v('presenterNotes'); if (pn) push(`    Notes: ${pn}`);
+  } else {
+    push('  Presenter: not required');
+  }
+  if (kioskOn) {
+    const fns = [];
+    if (document.getElementById('kiosk_checkin')?.checked)    fns.push('Participant Check-In');
+    if (document.getElementById('kiosk_bib')?.checked)         fns.push('Bib Assignment');
+    if (document.getElementById('kiosk_transponder')?.checked) fns.push('Transponder Assignment');
+    push(`  Check In Kiosk: enabled${fns.length ? ` (${fns.join(', ')})` : ''}`);
+    const kn = v('kioskNotes'); if (kn) push(`    Notes: ${kn}`);
+  } else {
+    push('  Check In Kiosk: not required');
+  }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — EXTRA FEATURES]');
+  push('// TODO: Add RR14 MCP instructions for presenter and kiosk configuration here.');
+  blank();
+
+  const addl = v('additionalNotes');
+  if (addl) { push('── ADDITIONAL REQUIREMENTS ───────────────────'); push(addl); blank(); }
+
+  push('════════════════════════════════════════════════');
+  push('Please generate a complete RR14 event configuration based on the information above.');
+  push('Explain each major configuration section and provide specific RR14 settings/values where applicable.');
+
+  return L.join('\n');
+}
+
+// ── Build Configuration Report (HTML) ─────────────────────────────
+function buildReport() {
+  const h   = [];
+  const out = s => h.push(s);
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const eventName    = v('eventName') || '(unnamed event)';
+  const eventDate    = v('eventDate');
+  const contestCards = [...document.querySelectorAll('.contest-card')];
+  const multiContest = contestCards.length > 1;
+  const allSpecial   = getSpecialCategories();
+
+  // ── Header ─────────────────────────────────────────────────────
+  out(`<h1>Event Configuration Report</h1>`);
+  out(`<p class="report-meta">Event: <strong>${esc(eventName)}</strong>${eventDate ? ` &nbsp;|&nbsp; Date: <strong>${esc(eventDate)}</strong>` : ''}</p>`);
+
+  // ── A. Generated Data Fields ───────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>A. Generated Data Fields</h2>');
+  out('<p style="font-size:0.85rem;margin-bottom:0.75rem">The following fields will be generated for each participant record:</p>');
+  out('<table><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody>');
+  out('<tr><td><strong>Bib</strong></td><td>Participant bib number — primary identifier</td></tr>');
+  out('<tr><td><strong>Name</strong></td><td>Participant full name</td></tr>');
+  out('<tr><td><strong>Gender</strong></td><td>Gender (M / F)</td></tr>');
+  out('<tr><td><strong>DOB / Age</strong></td><td>Date of birth and computed age on race day</td></tr>');
+  out('<tr><td><strong>Gun Time</strong></td><td>Elapsed time from gun start to finish</td></tr>');
+  out('<tr><td><strong>Net Time</strong></td><td>Chip (net) time — elapsed from individual crossing of start mat to finish</td></tr>');
+  out('<tr><td><strong>Overall Place</strong></td><td>Overall finishing position</td></tr>');
+  contestCards.forEach((card, ci) => {
+    const cid   = card.id.replace('contest_', '');
+    const cName = v(`cName_${cid}`) || `Contest ${ci+1}`;
+    getContestSplits(cid).forEach((row, si) => {
+      const sid    = row.id.split('_').pop();
+      const sName  = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+      const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+      const sDist  = v(`sDist_${cid}_${sid}`);
+      const sUnit  = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+      const isLast = si === getContestSplits(cid).length - 1;
+      const pfx    = multiContest ? `[${esc(cName)}] ` : '';
+      if (sDisc === 'race_start') return; // race start has no elapsed time field
+      out(`<tr><td><strong>${pfx}${esc(sName)} Time</strong></td><td>${esc(cap(sDisc))} split time${sDist ? ` at ${esc(sDist)} ${esc(sUnit)} from start` : ''}${isLast ? ' — <em>finish / total time</em>' : ''}</td></tr>`);
+    });
+  });
+  allSpecial.forEach(cat =>
+    out(`<tr><td><strong>${esc(cap(cat))} Flag</strong></td><td>Boolean flag marking participant as ${esc(cap(cat))} category member</td></tr>`));
+  if (document.getElementById('chk_wave')?.checked)
+    out('<tr><td><strong>Wave</strong></td><td>Start wave number used for special-wave time adjustment</td></tr>');
+  if (document.getElementById('chk_ag')?.checked)
+    out('<tr><td><strong>Age Graded %</strong></td><td>Age-graded performance percentage using configured standard</td></tr>');
+  if (document.getElementById('chk_team')?.checked)
+    out('<tr><td><strong>Team</strong></td><td>Team affiliation used for team scoring</td></tr>');
+  if (document.getElementById('chk_points')?.checked)
+    out('<tr><td><strong>Points</strong></td><td>Series points earned at this event</td></tr>');
+  out('</tbody></table>');
+  out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add specific RR14 field configuration instructions here (field mappings, custom field setup via MCP).</div>');
+  out('</div>');
+
+  // ── B. Course Layout ───────────────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>B. Course Layout</h2>');
+  if (!contestCards.length) {
+    out('<p style="font-size:0.85rem;color:var(--text-muted)">No contests defined.</p>');
+  } else {
+    contestCards.forEach((card, ci) => {
+      const cid     = card.id.replace('contest_', '');
+      const cName   = v(`cName_${cid}`) || `Contest ${ci+1}`;
+      const cTiming = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
+      const splits  = getContestSplits(cid);
+      if (multiContest) out(`<h3>${esc(cName)}</h3>`);
+      out(`<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem">Timing method: <strong>${cTiming === 'gun' ? 'Gun time' : 'Chip (net) time'}</strong></p>`);
+      if (!splits.length) {
+        out('<p style="font-size:0.85rem;color:var(--text-muted)">No splits defined.</p>');
+      } else {
+        // Flow diagram
+        out('<div class="split-flow">');
+        splits.forEach((row, si) => {
+          const sid   = row.id.split('_').pop();
+          const sName = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+          const sDisc = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+          const sDist = v(`sDist_${cid}_${sid}`);
+          const sUnit = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+          const isLast = si === splits.length - 1;
+          const cls   = sDisc === 'race_start' ? 'split-node race-start' : isLast ? 'split-node finish-node' : 'split-node';
+          if (si > 0) out('<span class="split-arrow">→</span>');
+          out(`<div class="${cls}">${esc(sName)}${sDist && sDisc !== 'race_start' ? `<br><span style="font-size:0.68rem;font-weight:400;opacity:0.9">${esc(sDist)} ${esc(sUnit)}</span>` : ''}</div>`);
+        });
+        out('</div>');
+        // Detail table
+        out('<table style="margin-top:0.75rem"><thead><tr><th>#</th><th>Name</th><th>Discipline</th><th>Distance from Start</th><th>Timing Point</th></tr></thead><tbody>');
+        splits.forEach((row, si) => {
+          const sid    = row.id.split('_').pop();
+          const sName  = v(`sName_${cid}_${sid}`) || `Split ${si+1}`;
+          const sDisc  = document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running';
+          const sDist  = v(`sDist_${cid}_${sid}`);
+          const sUnit  = document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles';
+          const sTp    = v(`sTimingPt_${cid}_${sid}`);
+          const isLast = si === splits.length - 1;
+          const distCell = sDisc === 'race_start' ? '0 (start)' : (sDist ? `${esc(sDist)} ${esc(sUnit)}` : '—');
+          out(`<tr><td>${si+1}</td><td>${esc(sName)}${isLast ? ' <em style="color:#dc2626">[Finish]</em>' : ''}</td><td>${esc(cap(sDisc))}</td><td>${distCell}</td><td>${sTp ? esc(sTp) : '—'}</td></tr>`);
+        });
+        out('</tbody></table>');
+      }
+      out('<div class="ph-box" style="margin-top:0.75rem"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for configuring this contest\'s timing points and split setup here.</div>');
+      if (multiContest && ci < contestCards.length - 1) out('<hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">');
+    });
+  }
+  out('</div>');
+
+  // ── C. Results & Awards Lists ──────────────────────────────────
+  out('<div class="report-section">');
+  out('<h2>C. Results &amp; Awards Lists</h2>');
+  out('<p style="font-size:0.85rem;margin-bottom:0.875rem">The following results lists and awards reports will be produced:</p>');
+
+  const hasOverall   = document.getElementById('res_overall')?.checked;
+  const hasGenderOvr = document.getElementById('res_gender_overall')?.checked;
+  const hasAgeGroup  = document.getElementById('res_age_group')?.checked;
+  const hasMasters   = document.getElementById('res_masters')?.checked;
+  const hasGrandM    = document.getElementById('res_grand_masters')?.checked;
+  const hasJuniors   = document.getElementById('res_juniors')?.checked;
+  const hasClydes    = document.getElementById('res_clydesdale')?.checked;
+  const hasNoDblDip  = document.getElementById('res_no_double_dip')?.checked;
+  const dOvr  = v('depthOverall')       || '3';
+  const dGOvr = v('depthGenderOverall') || '3';
+  const dAG   = v('depthAgeGroup')      || '3';
+  const dMast = v('depthMasters')       || '3';
+  const dGM   = v('depthGrandMasters')  || '3';
+  const dJr   = v('depthJuniors')       || '3';
+  const dCly  = v('depthClydesdale')    || '3';
+  const mastersAge = v('mastersAge')      || '40';
+  const grandMAge  = v('grandMastersAge') || '60';
+  const juniorsAge = v('juniorsMaxAge')   || '19';
+  const agGG   = document.getElementById('agGenderGroup')?.checked;
+  const mastGG = document.getElementById('mastersGenderGroup')?.checked;
+  const grandGG= document.getElementById('grandMastersGenderGroup')?.checked;
+  const jrGG   = document.getElementById('juniorsGenderGroup')?.checked;
+  const clydW  = v('clydWeight');
+  const athenaW= v('athenaWeight');
+  const brackets = (v('ageGroupBrackets') || '').split(',').map(b => b.trim()).filter(Boolean);
+
+  let n = 0;
+  function resultCard(name, desc) {
+    n++;
+    out(`<div class="result-card"><div class="result-card-hd"><div class="result-card-num">${n}</div><div class="result-card-name">${name}</div></div><div class="result-card-bd">${desc}</div></div>`);
+  }
+
+  contestCards.forEach((card, ci) => {
+    const cid       = card.id.replace('contest_', '');
+    const cName     = v(`cName_${cid}`) || `Contest ${ci+1}`;
+    const pfx       = multiContest ? `[${esc(cName)}] ` : '';
+    const cTiming   = getRadioValue(`cTimingMethod_${cid}`) || 'chip';
+    const timeLabel = cTiming === 'gun' ? 'gun time' : 'chip time';
+    if (multiContest) out(`<h3>── ${esc(cName)}</h3>`);
+
+    if (hasOverall)
+      resultCard(`${pfx}Overall Results`,
+        `All finishers ranked by ${timeLabel}. Top <strong>${dOvr}</strong> overall places awarded.`);
+    if (hasGenderOvr)
+      resultCard(`${pfx}Gender Overall`,
+        `All finishers in one combined list. Results ranked within each gender group by ${timeLabel}. Top <strong>${dGOvr}</strong> per gender awarded.`);
+    if (hasAgeGroup) {
+      const gn = agGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = agGG ? `Top <strong>${dAG}</strong> per gender awarded.` : `Top <strong>${dAG}</strong> awarded.`;
+      if (brackets.length)
+        brackets.forEach(b => resultCard(`${pfx}Age Group ${esc(b)}`, `Finishers in bracket <strong>${esc(b)}</strong>${gn}. ${dn}`));
+      else
+        resultCard(`${pfx}Age Group Results`, `Finishers grouped by age bracket (brackets TBD)${gn}. ${dn}`);
+    }
+    if (hasMasters) {
+      const gn = mastGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = mastGG ? `Top <strong>${dMast}</strong> per gender awarded.` : `Top <strong>${dMast}</strong> awarded.`;
+      resultCard(`${pfx}Masters (${esc(mastersAge)}+)`, `Finishers aged <strong>${esc(mastersAge)}+</strong>${gn}. ${dn}`);
+    }
+    if (hasGrandM) {
+      const gn = grandGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = grandGG ? `Top <strong>${dGM}</strong> per gender awarded.` : `Top <strong>${dGM}</strong> awarded.`;
+      resultCard(`${pfx}Grand Masters (${esc(grandMAge)}+)`, `Finishers aged <strong>${esc(grandMAge)}+</strong>${gn}. ${dn}`);
+    }
+    if (hasJuniors) {
+      const u  = `U${parseInt(juniorsAge)+1}`;
+      const gn = jrGG ? `, sub-ranked by gender (each gender ranked by ${timeLabel})` : `, ranked by ${timeLabel}`;
+      const dn = jrGG ? `Top <strong>${dJr}</strong> per gender awarded.` : `Top <strong>${dJr}</strong> awarded.`;
+      resultCard(`${pfx}Juniors (${u})`, `Finishers aged <strong>≤${esc(juniorsAge)}</strong>${gn}. ${dn}`);
+    }
+    if (hasClydes) {
+      resultCard(`${pfx}Clydesdale`, `Male finishers${clydW ? ` weighing <strong>≥${esc(clydW)} lbs</strong>` : ' in Clydesdale weight class'}, ranked by ${timeLabel}. Top <strong>${dCly}</strong> awarded.`);
+      resultCard(`${pfx}Athena`, `Female finishers${athenaW ? ` weighing <strong>≥${esc(athenaW)} lbs</strong>` : ' in Athena weight class'}, ranked by ${timeLabel}. Top <strong>${dCly}</strong> awarded.`);
+    }
+    allSpecial.forEach(cat =>
+      resultCard(`${pfx}${esc(cap(cat))} Results`, `${esc(cap(cat))} category participants ranked by ${timeLabel}.`));
+    if (document.getElementById('chk_team')?.checked) {
+      const method = v('teamScoringMethod') || 'configured method';
+      const cats   = (v('teamCategories') || '').split(',').map(c => c.trim()).filter(Boolean);
+      if (cats.length)
+        cats.forEach(tc => resultCard(`${pfx}${esc(tc)} Team Results`, `Team rankings for <strong>${esc(tc)}</strong> using ${esc(method)}.`));
+      else
+        resultCard(`${pfx}Team Results`, `Team rankings using ${esc(method)}.`);
+    }
+    if (document.getElementById('chk_points')?.checked)
+      resultCard(`${pfx}Points Series Standings`, `Cumulative series points standings for all participants.`);
+    if (multiContest && ci < contestCards.length - 1) out('<hr style="margin:0.875rem 0;border:none;border-top:1px solid var(--border)">');
+  });
+
+  if (hasNoDblDip)
+    out('<div class="ph-box" style="margin-top:0.875rem"><strong>⚠️ No Double Dipping:</strong> Participants placing in a higher-priority category are excluded from awards in lower-priority categories. <strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP configuration instructions for double-dipping exclusion rules here.</div>');
+  out('<div class="ph-box" style="margin-top:0.75rem"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for results list naming, template assignment, and awards configuration here.</div>');
+  out(`<p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.875rem">Total results / awards lists: <strong>${n}</strong></p>`);
+  out('</div>');
+
+  // ── D. Scoring ─────────────────────────────────────────────────
+  const anyScoring = ['chk_points','chk_team','chk_ag','chk_wave'].some(id => document.getElementById(id)?.checked);
+  if (anyScoring) {
+    out('<div class="report-section">');
+    out('<h2>D. Scoring Configuration</h2>');
+    if (document.getElementById('chk_wave')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-bottom:0.375rem"><strong>Special Start Waves:</strong> ${esc(v('waveNotes') || 'Wave details TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for wave field configuration and time adjustment here.</div>');
+    }
+    if (document.getElementById('chk_ag')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Age-Graded %:</strong> Standard: ${esc(v('agStandard') || 'TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for age-grading field and formula configuration here.</div>');
+    }
+    if (document.getElementById('chk_team')?.checked) {
+      const method = v('teamScoringMethod') || 'TBD';
+      const sn     = v('teamScoringN');
+      const cats   = v('teamCategories');
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Team Scoring:</strong> ${esc(method)}${sn ? `, top ${esc(sn)} scorers` : ''}${cats ? ` | Categories: ${esc(cats)}` : ''}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for team field and scoring setup here.</div>');
+    }
+    if (document.getElementById('chk_points')?.checked) {
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Points Series:</strong> ${esc(v('pointsFormula') || 'Formula TBD')}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for points field and series scoring here.</div>');
+    }
+    out('</div>');
+  }
+
+  // ── E. Extra Features ──────────────────────────────────────────
+  const hasPresenter = document.getElementById('chk_presenter')?.checked;
+  const hasKiosk     = document.getElementById('chk_kiosk')?.checked;
+  if (hasPresenter || hasKiosk) {
+    out('<div class="report-section">');
+    out('<h2>E. Extra Features</h2>');
+    if (hasPresenter) {
+      const views = [];
+      if (document.getElementById('presenter_live_results')?.checked)  views.push('Live Results');
+      if (document.getElementById('presenter_announcer_feed')?.checked) views.push('Announcer Feed');
+      if (document.getElementById('presenter_leaderboard')?.checked)    views.push('Leaderboard');
+      out(`<p style="font-size:0.875rem;margin-bottom:0.375rem"><strong>Presenter:</strong> ${views.length ? esc(views.join(', ')) : 'enabled — no views selected'}</p>`);
+      const pn = v('presenterNotes');
+      if (pn) out(`<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.375rem">${esc(pn)}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for presenter view configuration here.</div>');
+    }
+    if (hasKiosk) {
+      const fns = [];
+      if (document.getElementById('kiosk_checkin')?.checked)    fns.push('Participant Check-In');
+      if (document.getElementById('kiosk_bib')?.checked)         fns.push('Bib Assignment');
+      if (document.getElementById('kiosk_transponder')?.checked) fns.push('Transponder Assignment');
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Check In Kiosk:</strong> ${fns.length ? esc(fns.join(', ')) : 'enabled — no functions selected'}</p>`);
+      const kn = v('kioskNotes');
+      if (kn) out(`<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.375rem">${esc(kn)}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for check-in kiosk configuration here.</div>');
+    }
+    out('</div>');
+  }
+
+  return h.join('\n');
+}
+
+// ── Form submit ────────────────────────────────────────────────────
+document.getElementById('rr14Form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  document.getElementById('promptOutput').textContent = buildPrompt();
+  document.getElementById('reportOutput').innerHTML   = buildReport();
+  const out = document.getElementById('outputSection');
+  out.classList.add('visible');
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ── Reset ──────────────────────────────────────────────────────────
+function resetForm() {
+  if (!confirm('Clear all form data?')) return;
+  document.getElementById('rr14Form').reset();
+  document.getElementById('contestList').innerHTML = '';
+  document.getElementById('timingPointList').innerHTML = '';
+  document.getElementById('customRankingsWrapper').innerHTML =
+    '<input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />';
+  wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+  customRankings.length = 0;
+  contestCount     = 0;
+  timingPointCount = 0;
+  splitCounts      = {};
+  timingPointsData = {};
+  // Sync option settings panels to their (now-reset) checkbox states
+  OPTION_TOGGLES.forEach(([chkId, settId]) => {
+    const chk  = document.getElementById(chkId);
+    const sett = document.getElementById(settId);
+    if (chk && sett) sett.style.display = chk.checked ? 'block' : 'none';
+  });
+  document.getElementById('outputSection').classList.remove('visible');
+  // Restore defaults
+  addTimingPoint();
+  addContest();
+}
+
+// ── Export / Import ────────────────────────────────────────────────
+function exportSettings() {
+  const data = {
+    version: 1,
+    eventName: v('eventName'),
+    eventDate: v('eventDate'),
+    eventNotes: v('eventNotes'),
+    timingPoints: [...document.querySelectorAll('.timing-point-row')].map(row => ({
+      name: v(`tpName_${row.id.replace('tp_', '')}`),
+    })),
+    contests: [...document.querySelectorAll('.contest-card')].map(card => {
+      const cid = card.id.replace('contest_', '');
+      return {
+        name: v(`cName_${cid}`),
+        timingMethod: getRadioValue(`cTimingMethod_${cid}`) || 'chip',
+        notes: v(`cNotes_${cid}`),
+        splits: getContestSplits(cid).map(row => {
+          const sid = row.id.split('_').pop();
+          return {
+            name: v(`sName_${cid}_${sid}`),
+            discipline: document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running',
+            distance: v(`sDist_${cid}_${sid}`),
+            unit: document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles',
+            timingPoint: v(`sTimingPt_${cid}_${sid}`),
+          };
+        }),
+      };
+    }),
+    results: {
+      overall:      { enabled: document.getElementById('res_overall')?.checked,        depth: v('depthOverall') },
+      genderOverall:{ enabled: document.getElementById('res_gender_overall')?.checked,  depth: v('depthGenderOverall') },
+      ageGroup:     { enabled: document.getElementById('res_age_group')?.checked,       brackets: v('ageGroupBrackets'), depth: v('depthAgeGroup'),       genderGroup: document.getElementById('agGenderGroup')?.checked },
+      masters:      { enabled: document.getElementById('res_masters')?.checked,         minAge: v('mastersAge'),         depth: v('depthMasters'),        genderGroup: document.getElementById('mastersGenderGroup')?.checked },
+      grandMasters: { enabled: document.getElementById('res_grand_masters')?.checked,   minAge: v('grandMastersAge'),    depth: v('depthGrandMasters'),   genderGroup: document.getElementById('grandMastersGenderGroup')?.checked },
+      juniors:      { enabled: document.getElementById('res_juniors')?.checked,         maxAge: v('juniorsMaxAge'),      depth: v('depthJuniors'),        genderGroup: document.getElementById('juniorsGenderGroup')?.checked },
+      clydesdale:   { enabled: document.getElementById('res_clydesdale')?.checked,      clydWeight: v('clydWeight'),     athenaWeight: v('athenaWeight'), depth: v('depthClydesdale') },
+      noDoubleDip:  document.getElementById('res_no_double_dip')?.checked,
+    },
+    specialRankings: {
+      predefined: ['stroller','dog','wheelchair','handcycle','military','costume'].filter(k => document.getElementById(`chk_${k}`)?.checked),
+      custom: [...customRankings],
+      notes: v('specialRankingNotes'),
+    },
+    scoring: {
+      points:    { enabled: document.getElementById('chk_points')?.checked, formula: v('pointsFormula') },
+      team:      { enabled: document.getElementById('chk_team')?.checked,   method: v('teamScoringMethod'), n: v('teamScoringN'), categories: v('teamCategories') },
+      ageGraded: { enabled: document.getElementById('chk_ag')?.checked,     standard: v('agStandard') },
+      waves:     { enabled: document.getElementById('chk_wave')?.checked,   notes: v('waveNotes') },
+      notes: v('scoringNotes'),
+    },
+    extraFeatures: {
+      presenter: {
+        enabled:       document.getElementById('chk_presenter')?.checked,
+        liveResults:   document.getElementById('presenter_live_results')?.checked,
+        announcerFeed: document.getElementById('presenter_announcer_feed')?.checked,
+        leaderboard:   document.getElementById('presenter_leaderboard')?.checked,
+        notes:         v('presenterNotes'),
+      },
+      kiosk: {
+        enabled:               document.getElementById('chk_kiosk')?.checked,
+        checkIn:               document.getElementById('kiosk_checkin')?.checked,
+        bibAssignment:         document.getElementById('kiosk_bib')?.checked,
+        transponderAssignment: document.getElementById('kiosk_transponder')?.checked,
+        notes:                 v('kioskNotes'),
+      },
+    },
+    additionalNotes: v('additionalNotes'),
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${(v('eventName') || 'rr14-config').replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importSettings(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try { loadSettings(JSON.parse(e.target.result)); }
+    catch { alert('Could not read settings file — make sure it was exported from this form.'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function loadSettings(data) {
+  // Silent reset
+  document.getElementById('rr14Form').reset();
+  document.getElementById('contestList').innerHTML     = '';
+  document.getElementById('timingPointList').innerHTML = '';
+  const wrapper = document.getElementById('customRankingsWrapper');
+  wrapper.innerHTML = '<input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />';
+  wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+  customRankings.length = 0;
+  contestCount = timingPointCount = 0;
+  splitCounts = {}; timingPointsData = {};
+  document.getElementById('outputSection').classList.remove('visible');
+
+  const set    = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+  set('eventName', data.eventName);
+  set('eventDate', data.eventDate);
+  set('eventNotes', data.eventNotes);
+  set('additionalNotes', data.additionalNotes);
+
+  // Timing points
+  (data.timingPoints || []).forEach(tp => {
+    addTimingPoint();
+    const tid = timingPointCount;
+    const inp = document.getElementById(`tpName_${tid}`);
+    if (inp) { inp.value = tp.name || ''; timingPointsData[tid] = tp.name || ''; }
+  });
+  if (!timingPointCount) addTimingPoint();
+  updateAllSplitTimingSelects();
+
+  // Contests & splits
+  (data.contests || []).forEach(contest => {
+    addContest();
+    const cid = contestCount;
+    set(`cName_${cid}`, contest.name);
+    set(`cNotes_${cid}`, contest.notes);
+    const radio = document.querySelector(`input[name="cTimingMethod_${cid}"][value="${contest.timingMethod || 'chip'}"]`);
+    if (radio) radio.checked = true;
+    (contest.splits || []).forEach(split => {
+      addSplit(cid);
+      const sid    = splitCounts[cid];
+      set(`sName_${cid}_${sid}`, split.name);
+      const discEl = document.getElementById(`sDisc_${cid}_${sid}`);
+      if (discEl) discEl.value = split.discipline || 'running';
+      set(`sDist_${cid}_${sid}`, split.distance);
+      const unitEl = document.getElementById(`sUnit_${cid}_${sid}`);
+      if (unitEl) unitEl.value = split.unit || 'miles';
+      onSplitDiscChange(cid, sid);
+      const tpSel = document.getElementById(`sTimingPt_${cid}_${sid}`);
+      if (tpSel && split.timingPoint) tpSel.value = split.timingPoint;
+    });
+  });
+  if (!contestCount) addContest();
+
+  // Results
+  const res = data.results || {};
+  setChk('res_overall',        res.overall?.enabled      ?? true);  set('depthOverall',          res.overall?.depth);
+  setChk('res_gender_overall', res.genderOverall?.enabled ?? true);  set('depthGenderOverall',    res.genderOverall?.depth);
+  setChk('res_age_group',      res.ageGroup?.enabled);               set('ageGroupBrackets',      res.ageGroup?.brackets);
+  set('depthAgeGroup',         res.ageGroup?.depth);                 setChk('agGenderGroup',      res.ageGroup?.genderGroup);
+  setChk('res_masters',        res.masters?.enabled);                set('mastersAge',            res.masters?.minAge);
+  set('depthMasters',          res.masters?.depth);                  setChk('mastersGenderGroup', res.masters?.genderGroup);
+  setChk('res_grand_masters',  res.grandMasters?.enabled);           set('grandMastersAge',       res.grandMasters?.minAge);
+  set('depthGrandMasters',     res.grandMasters?.depth);             setChk('grandMastersGenderGroup', res.grandMasters?.genderGroup);
+  setChk('res_juniors',        res.juniors?.enabled);                set('juniorsMaxAge',         res.juniors?.maxAge);
+  set('depthJuniors',          res.juniors?.depth);                  setChk('juniorsGenderGroup', res.juniors?.genderGroup);
+  setChk('res_clydesdale',     res.clydesdale?.enabled);             set('clydWeight',            res.clydesdale?.clydWeight);
+  set('athenaWeight',          res.clydesdale?.athenaWeight);        set('depthClydesdale',       res.clydesdale?.depth);
+  setChk('res_no_double_dip',  res.noDoubleDip);
+
+  // Special rankings
+  const sr = data.specialRankings || {};
+  ['stroller','dog','wheelchair','handcycle','military','costume'].forEach(k =>
+    setChk(`chk_${k}`, (sr.predefined || []).includes(k)));
+  (sr.custom || []).forEach(val => {
+    if (customRankings.includes(val)) return;
+    customRankings.push(val);
+    const inp = document.getElementById('customRankingInput');
+    const tag = document.createElement('span');
+    tag.className = 'tag'; tag.dataset.value = val;
+    tag.innerHTML = `${escHtml(val)} <button type="button" title="remove">✕</button>`;
+    tag.querySelector('button').addEventListener('click', () => {
+      const idx = customRankings.indexOf(val); if (idx > -1) customRankings.splice(idx, 1); tag.remove();
+    });
+    wrapper.insertBefore(tag, inp);
+  });
+  set('specialRankingNotes', sr.notes);
+
+  // Scoring
+  const sc = data.scoring || {};
+  setChk('chk_points', sc.points?.enabled);    set('pointsFormula',     sc.points?.formula);
+  setChk('chk_team',   sc.team?.enabled);       set('teamScoringMethod', sc.team?.method);
+  set('teamScoringN',  sc.team?.n);             set('teamCategories',    sc.team?.categories);
+  setChk('chk_ag',     sc.ageGraded?.enabled);  set('agStandard',        sc.ageGraded?.standard);
+  setChk('chk_wave',   sc.waves?.enabled);      set('waveNotes',         sc.waves?.notes);
+  set('scoringNotes',  sc.notes);
+
+  // Extra features
+  const ef = data.extraFeatures || {};
+  setChk('chk_presenter',            ef.presenter?.enabled);
+  setChk('presenter_live_results',   ef.presenter?.liveResults);
+  setChk('presenter_announcer_feed', ef.presenter?.announcerFeed);
+  setChk('presenter_leaderboard',    ef.presenter?.leaderboard);
+  set('presenterNotes',              ef.presenter?.notes);
+  setChk('chk_kiosk',               ef.kiosk?.enabled);
+  setChk('kiosk_checkin',           ef.kiosk?.checkIn);
+  setChk('kiosk_bib',               ef.kiosk?.bibAssignment);
+  setChk('kiosk_transponder',       ef.kiosk?.transponderAssignment);
+  set('kioskNotes',                 ef.kiosk?.notes);
+
+  // Sync option-settings panels to restored checkbox states
+  OPTION_TOGGLES.forEach(([chkId, settId]) => {
+    const chk = document.getElementById(chkId);
+    const sett = document.getElementById(settId);
+    if (chk && sett) sett.style.display = chk.checked ? 'block' : 'none';
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+addTimingPoint(); // timing points must exist before splits reference them
+addContest();
+</script>
+</body>
+</html>

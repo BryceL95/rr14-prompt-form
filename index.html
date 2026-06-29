@@ -477,9 +477,54 @@
     </div>
   </div>
 
-  <!-- ── 7: Additional ────────────────────────────────────────────── -->
+  <!-- ── 7: Extra Features ───────────────────────────────────────── -->
   <div class="section">
-    <div class="section-header"><span class="section-num">7</span><h2>Additional Requirements</h2></div>
+    <div class="section-header"><span class="section-num">7</span><h2>Extra Features</h2></div>
+    <div class="section-body">
+      <p class="section-note">Enable additional RR14 features needed for this event.</p>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_presenter" /> Presenter</label>
+        <div class="option-settings" id="extra_settings_presenter">
+          <div class="field">
+            <label class="small-label">Views to configure</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="presenter_live_results" /> Live Results</label>
+              <label><input type="checkbox" id="presenter_announcer_feed" /> Announcer Feed</label>
+              <label><input type="checkbox" id="presenter_leaderboard" /> Leaderboard</label>
+            </div>
+          </div>
+          <div class="field" style="margin-top:0.5rem">
+            <label class="small-label">Presenter notes</label>
+            <textarea id="presenterNotes" placeholder="e.g. display top 10 overall, refresh every 30 seconds…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <label class="option-toggle"><input type="checkbox" id="chk_kiosk" /> Check In Kiosk</label>
+        <div class="option-settings" id="extra_settings_kiosk">
+          <div class="field">
+            <label class="small-label">Kiosk functions</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="kiosk_checkin" /> Participant Check-In</label>
+              <label><input type="checkbox" id="kiosk_bib" /> Bib Assignment</label>
+              <label><input type="checkbox" id="kiosk_transponder" /> Transponder Assignment</label>
+            </div>
+          </div>
+          <div class="field" style="margin-top:0.5rem">
+            <label class="small-label">Kiosk notes</label>
+            <textarea id="kioskNotes" placeholder="e.g. number of stations, self-service vs. staffed…"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 8: Additional ────────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><span class="section-num">8</span><h2>Additional Requirements</h2></div>
     <div class="section-body">
       <div class="field">
         <label for="additionalNotes">Anything else the AI should know?</label>
@@ -564,6 +609,9 @@ const OPTION_TOGGLES = [
   ['chk_team',   'scoring_settings_team'],
   ['chk_ag',     'scoring_settings_ag'],
   ['chk_wave',   'scoring_settings_wave'],
+  // Extra Features
+  ['chk_presenter', 'extra_settings_presenter'],
+  ['chk_kiosk',     'extra_settings_kiosk'],
 ];
 
 OPTION_TOGGLES.forEach(([chkId, settId]) => {
@@ -834,7 +882,7 @@ function buildPrompt() {
   }
   blank();
   push('[INSTRUCTION PLACEHOLDER — TIMING POINTS]');
-  push('// TODO: Add RR14 MCP instructions for timing point configuration here.');
+  push('Timing point names should always be all capital letters. A color can be specified for each timing point. Lighter colors are better for easier readability with black text.');
   blank();
 
   // Contests
@@ -958,7 +1006,7 @@ function buildPrompt() {
   const rn = v('specialRankingNotes'); if (rn) push(`  Notes: ${rn}`);
   blank();
   push('[INSTRUCTION PLACEHOLDER — SPECIAL RANKINGS]');
-  push('// TODO: Add RR14 MCP instructions for special ranking and category configuration here.');
+  push('Double Dipping: When double dipping is enabled, the Awards Depth value specifies the number of participants to exclude from the next ranking. This can be done using [RankX]>[AwardsDepth] in the filter where X represents the ID of the previous Ranking and AwardsDepth represents the specified depth for that ranking. Often, User Defined Functions are created, one per ranking to specify if someone is an awards winner or not for the given ranking.');
   blank();
 
   // Scoring
@@ -987,6 +1035,35 @@ function buildPrompt() {
   blank();
   push('[INSTRUCTION PLACEHOLDER — SCORING]');
   push('// TODO: Add RR14 MCP instructions for scoring configuration here.');
+  blank();
+
+  // Extra Features
+  push('── EXTRA FEATURES ────────────────────────────');
+  const presenterOn = document.getElementById('chk_presenter')?.checked;
+  const kioskOn     = document.getElementById('chk_kiosk')?.checked;
+  if (presenterOn) {
+    const views = [];
+    if (document.getElementById('presenter_live_results')?.checked)  views.push('Live Results');
+    if (document.getElementById('presenter_announcer_feed')?.checked) views.push('Announcer Feed');
+    if (document.getElementById('presenter_leaderboard')?.checked)    views.push('Leaderboard');
+    push(`  Presenter: enabled${views.length ? ` (${views.join(', ')})` : ''}`);
+    const pn = v('presenterNotes'); if (pn) push(`    Notes: ${pn}`);
+  } else {
+    push('  Presenter: not required');
+  }
+  if (kioskOn) {
+    const fns = [];
+    if (document.getElementById('kiosk_checkin')?.checked)    fns.push('Participant Check-In');
+    if (document.getElementById('kiosk_bib')?.checked)         fns.push('Bib Assignment');
+    if (document.getElementById('kiosk_transponder')?.checked) fns.push('Transponder Assignment');
+    push(`  Check In Kiosk: enabled${fns.length ? ` (${fns.join(', ')})` : ''}`);
+    const kn = v('kioskNotes'); if (kn) push(`    Notes: ${kn}`);
+  } else {
+    push('  Check In Kiosk: not required');
+  }
+  blank();
+  push('[INSTRUCTION PLACEHOLDER — EXTRA FEATURES]');
+  push('// TODO: Add RR14 MCP instructions for presenter and kiosk configuration here.');
   blank();
 
   const addl = v('additionalNotes');
@@ -1234,6 +1311,35 @@ function buildReport() {
     out('</div>');
   }
 
+  // ── E. Extra Features ──────────────────────────────────────────
+  const hasPresenter = document.getElementById('chk_presenter')?.checked;
+  const hasKiosk     = document.getElementById('chk_kiosk')?.checked;
+  if (hasPresenter || hasKiosk) {
+    out('<div class="report-section">');
+    out('<h2>E. Extra Features</h2>');
+    if (hasPresenter) {
+      const views = [];
+      if (document.getElementById('presenter_live_results')?.checked)  views.push('Live Results');
+      if (document.getElementById('presenter_announcer_feed')?.checked) views.push('Announcer Feed');
+      if (document.getElementById('presenter_leaderboard')?.checked)    views.push('Leaderboard');
+      out(`<p style="font-size:0.875rem;margin-bottom:0.375rem"><strong>Presenter:</strong> ${views.length ? esc(views.join(', ')) : 'enabled — no views selected'}</p>`);
+      const pn = v('presenterNotes');
+      if (pn) out(`<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.375rem">${esc(pn)}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for presenter view configuration here.</div>');
+    }
+    if (hasKiosk) {
+      const fns = [];
+      if (document.getElementById('kiosk_checkin')?.checked)    fns.push('Participant Check-In');
+      if (document.getElementById('kiosk_bib')?.checked)         fns.push('Bib Assignment');
+      if (document.getElementById('kiosk_transponder')?.checked) fns.push('Transponder Assignment');
+      out(`<p style="font-size:0.875rem;margin-top:0.75rem;margin-bottom:0.375rem"><strong>Check In Kiosk:</strong> ${fns.length ? esc(fns.join(', ')) : 'enabled — no functions selected'}</p>`);
+      const kn = v('kioskNotes');
+      if (kn) out(`<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.375rem">${esc(kn)}</p>`);
+      out('<div class="ph-box"><strong>📋 TODO — LLM Instructions:</strong> Add RR14 MCP instructions for check-in kiosk configuration here.</div>');
+    }
+    out('</div>');
+  }
+
   return h.join('\n');
 }
 
@@ -1322,6 +1428,22 @@ function exportSettings() {
       ageGraded: { enabled: document.getElementById('chk_ag')?.checked,     standard: v('agStandard') },
       waves:     { enabled: document.getElementById('chk_wave')?.checked,   notes: v('waveNotes') },
       notes: v('scoringNotes'),
+    },
+    extraFeatures: {
+      presenter: {
+        enabled:       document.getElementById('chk_presenter')?.checked,
+        liveResults:   document.getElementById('presenter_live_results')?.checked,
+        announcerFeed: document.getElementById('presenter_announcer_feed')?.checked,
+        leaderboard:   document.getElementById('presenter_leaderboard')?.checked,
+        notes:         v('presenterNotes'),
+      },
+      kiosk: {
+        enabled:               document.getElementById('chk_kiosk')?.checked,
+        checkIn:               document.getElementById('kiosk_checkin')?.checked,
+        bibAssignment:         document.getElementById('kiosk_bib')?.checked,
+        transponderAssignment: document.getElementById('kiosk_transponder')?.checked,
+        notes:                 v('kioskNotes'),
+      },
     },
     additionalNotes: v('additionalNotes'),
   };
@@ -1444,6 +1566,19 @@ function loadSettings(data) {
   setChk('chk_ag',     sc.ageGraded?.enabled);  set('agStandard',        sc.ageGraded?.standard);
   setChk('chk_wave',   sc.waves?.enabled);      set('waveNotes',         sc.waves?.notes);
   set('scoringNotes',  sc.notes);
+
+  // Extra features
+  const ef = data.extraFeatures || {};
+  setChk('chk_presenter',            ef.presenter?.enabled);
+  setChk('presenter_live_results',   ef.presenter?.liveResults);
+  setChk('presenter_announcer_feed', ef.presenter?.announcerFeed);
+  setChk('presenter_leaderboard',    ef.presenter?.leaderboard);
+  set('presenterNotes',              ef.presenter?.notes);
+  setChk('chk_kiosk',               ef.kiosk?.enabled);
+  setChk('kiosk_checkin',           ef.kiosk?.checkIn);
+  setChk('kiosk_bib',               ef.kiosk?.bibAssignment);
+  setChk('kiosk_transponder',       ef.kiosk?.transponderAssignment);
+  set('kioskNotes',                 ef.kiosk?.notes);
 
   // Sync option-settings panels to restored checkbox states
   OPTION_TOGGLES.forEach(([chkId, settId]) => {

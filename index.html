@@ -133,7 +133,7 @@
     .tag button:hover { opacity: 1; }
     .tag-input-wrapper input { border: none; outline: none; flex: 1; min-width: 80px; font-size: 0.875rem; padding: 0; background: transparent; }
 
-    .actions { display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 0.5rem; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding-top: 0.5rem; }
 
     /* Output */
     .output-section { max-width: 820px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; display: none; }
@@ -490,8 +490,14 @@
 
   <!-- ── Actions ───────────────────────────────────────────────────── -->
   <div class="actions">
-    <button type="button" class="btn btn-outline" onclick="resetForm()">Clear Form</button>
-    <button type="submit" class="btn btn-primary">Generate Prompt &amp; Report</button>
+    <div style="display:flex;gap:0.5rem">
+      <button type="button" class="btn btn-outline" onclick="exportSettings()">Export Settings</button>
+      <label class="btn btn-outline" style="cursor:pointer">Import Settings<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importSettings(this)" /></label>
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button type="button" class="btn btn-outline" onclick="resetForm()">Clear Form</button>
+      <button type="submit" class="btn btn-primary">Generate Prompt &amp; Report</button>
+    </div>
   </div>
 
 </form>
@@ -1265,6 +1271,186 @@ function resetForm() {
   // Restore defaults
   addTimingPoint();
   addContest();
+}
+
+// ── Export / Import ────────────────────────────────────────────────
+function exportSettings() {
+  const data = {
+    version: 1,
+    eventName: v('eventName'),
+    eventDate: v('eventDate'),
+    eventNotes: v('eventNotes'),
+    timingPoints: [...document.querySelectorAll('.timing-point-row')].map(row => ({
+      name: v(`tpName_${row.id.replace('tp_', '')}`),
+    })),
+    contests: [...document.querySelectorAll('.contest-card')].map(card => {
+      const cid = card.id.replace('contest_', '');
+      return {
+        name: v(`cName_${cid}`),
+        timingMethod: getRadioValue(`cTimingMethod_${cid}`) || 'chip',
+        notes: v(`cNotes_${cid}`),
+        splits: getContestSplits(cid).map(row => {
+          const sid = row.id.split('_').pop();
+          return {
+            name: v(`sName_${cid}_${sid}`),
+            discipline: document.getElementById(`sDisc_${cid}_${sid}`)?.value || 'running',
+            distance: v(`sDist_${cid}_${sid}`),
+            unit: document.getElementById(`sUnit_${cid}_${sid}`)?.value || 'miles',
+            timingPoint: v(`sTimingPt_${cid}_${sid}`),
+          };
+        }),
+      };
+    }),
+    results: {
+      overall:      { enabled: document.getElementById('res_overall')?.checked,        depth: v('depthOverall') },
+      genderOverall:{ enabled: document.getElementById('res_gender_overall')?.checked,  depth: v('depthGenderOverall') },
+      ageGroup:     { enabled: document.getElementById('res_age_group')?.checked,       brackets: v('ageGroupBrackets'), depth: v('depthAgeGroup'),       genderGroup: document.getElementById('agGenderGroup')?.checked },
+      masters:      { enabled: document.getElementById('res_masters')?.checked,         minAge: v('mastersAge'),         depth: v('depthMasters'),        genderGroup: document.getElementById('mastersGenderGroup')?.checked },
+      grandMasters: { enabled: document.getElementById('res_grand_masters')?.checked,   minAge: v('grandMastersAge'),    depth: v('depthGrandMasters'),   genderGroup: document.getElementById('grandMastersGenderGroup')?.checked },
+      juniors:      { enabled: document.getElementById('res_juniors')?.checked,         maxAge: v('juniorsMaxAge'),      depth: v('depthJuniors'),        genderGroup: document.getElementById('juniorsGenderGroup')?.checked },
+      clydesdale:   { enabled: document.getElementById('res_clydesdale')?.checked,      clydWeight: v('clydWeight'),     athenaWeight: v('athenaWeight'), depth: v('depthClydesdale') },
+      noDoubleDip:  document.getElementById('res_no_double_dip')?.checked,
+    },
+    specialRankings: {
+      predefined: ['stroller','dog','wheelchair','handcycle','military','costume'].filter(k => document.getElementById(`chk_${k}`)?.checked),
+      custom: [...customRankings],
+      notes: v('specialRankingNotes'),
+    },
+    scoring: {
+      points:    { enabled: document.getElementById('chk_points')?.checked, formula: v('pointsFormula') },
+      team:      { enabled: document.getElementById('chk_team')?.checked,   method: v('teamScoringMethod'), n: v('teamScoringN'), categories: v('teamCategories') },
+      ageGraded: { enabled: document.getElementById('chk_ag')?.checked,     standard: v('agStandard') },
+      waves:     { enabled: document.getElementById('chk_wave')?.checked,   notes: v('waveNotes') },
+      notes: v('scoringNotes'),
+    },
+    additionalNotes: v('additionalNotes'),
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${(v('eventName') || 'rr14-config').replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importSettings(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try { loadSettings(JSON.parse(e.target.result)); }
+    catch { alert('Could not read settings file — make sure it was exported from this form.'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function loadSettings(data) {
+  // Silent reset
+  document.getElementById('rr14Form').reset();
+  document.getElementById('contestList').innerHTML     = '';
+  document.getElementById('timingPointList').innerHTML = '';
+  const wrapper = document.getElementById('customRankingsWrapper');
+  wrapper.innerHTML = '<input type="text" id="customRankingInput" placeholder="e.g. Barefoot, Tandem…" autocomplete="off" />';
+  wireTagInput('customRankingInput', 'customRankingsWrapper', customRankings);
+  customRankings.length = 0;
+  contestCount = timingPointCount = 0;
+  splitCounts = {}; timingPointsData = {};
+  document.getElementById('outputSection').classList.remove('visible');
+
+  const set    = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
+  const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+  set('eventName', data.eventName);
+  set('eventDate', data.eventDate);
+  set('eventNotes', data.eventNotes);
+  set('additionalNotes', data.additionalNotes);
+
+  // Timing points
+  (data.timingPoints || []).forEach(tp => {
+    addTimingPoint();
+    const tid = timingPointCount;
+    const inp = document.getElementById(`tpName_${tid}`);
+    if (inp) { inp.value = tp.name || ''; timingPointsData[tid] = tp.name || ''; }
+  });
+  if (!timingPointCount) addTimingPoint();
+  updateAllSplitTimingSelects();
+
+  // Contests & splits
+  (data.contests || []).forEach(contest => {
+    addContest();
+    const cid = contestCount;
+    set(`cName_${cid}`, contest.name);
+    set(`cNotes_${cid}`, contest.notes);
+    const radio = document.querySelector(`input[name="cTimingMethod_${cid}"][value="${contest.timingMethod || 'chip'}"]`);
+    if (radio) radio.checked = true;
+    (contest.splits || []).forEach(split => {
+      addSplit(cid);
+      const sid    = splitCounts[cid];
+      set(`sName_${cid}_${sid}`, split.name);
+      const discEl = document.getElementById(`sDisc_${cid}_${sid}`);
+      if (discEl) discEl.value = split.discipline || 'running';
+      set(`sDist_${cid}_${sid}`, split.distance);
+      const unitEl = document.getElementById(`sUnit_${cid}_${sid}`);
+      if (unitEl) unitEl.value = split.unit || 'miles';
+      onSplitDiscChange(cid, sid);
+      const tpSel = document.getElementById(`sTimingPt_${cid}_${sid}`);
+      if (tpSel && split.timingPoint) tpSel.value = split.timingPoint;
+    });
+  });
+  if (!contestCount) addContest();
+
+  // Results
+  const res = data.results || {};
+  setChk('res_overall',        res.overall?.enabled      ?? true);  set('depthOverall',          res.overall?.depth);
+  setChk('res_gender_overall', res.genderOverall?.enabled ?? true);  set('depthGenderOverall',    res.genderOverall?.depth);
+  setChk('res_age_group',      res.ageGroup?.enabled);               set('ageGroupBrackets',      res.ageGroup?.brackets);
+  set('depthAgeGroup',         res.ageGroup?.depth);                 setChk('agGenderGroup',      res.ageGroup?.genderGroup);
+  setChk('res_masters',        res.masters?.enabled);                set('mastersAge',            res.masters?.minAge);
+  set('depthMasters',          res.masters?.depth);                  setChk('mastersGenderGroup', res.masters?.genderGroup);
+  setChk('res_grand_masters',  res.grandMasters?.enabled);           set('grandMastersAge',       res.grandMasters?.minAge);
+  set('depthGrandMasters',     res.grandMasters?.depth);             setChk('grandMastersGenderGroup', res.grandMasters?.genderGroup);
+  setChk('res_juniors',        res.juniors?.enabled);                set('juniorsMaxAge',         res.juniors?.maxAge);
+  set('depthJuniors',          res.juniors?.depth);                  setChk('juniorsGenderGroup', res.juniors?.genderGroup);
+  setChk('res_clydesdale',     res.clydesdale?.enabled);             set('clydWeight',            res.clydesdale?.clydWeight);
+  set('athenaWeight',          res.clydesdale?.athenaWeight);        set('depthClydesdale',       res.clydesdale?.depth);
+  setChk('res_no_double_dip',  res.noDoubleDip);
+
+  // Special rankings
+  const sr = data.specialRankings || {};
+  ['stroller','dog','wheelchair','handcycle','military','costume'].forEach(k =>
+    setChk(`chk_${k}`, (sr.predefined || []).includes(k)));
+  (sr.custom || []).forEach(val => {
+    if (customRankings.includes(val)) return;
+    customRankings.push(val);
+    const inp = document.getElementById('customRankingInput');
+    const tag = document.createElement('span');
+    tag.className = 'tag'; tag.dataset.value = val;
+    tag.innerHTML = `${escHtml(val)} <button type="button" title="remove">✕</button>`;
+    tag.querySelector('button').addEventListener('click', () => {
+      const idx = customRankings.indexOf(val); if (idx > -1) customRankings.splice(idx, 1); tag.remove();
+    });
+    wrapper.insertBefore(tag, inp);
+  });
+  set('specialRankingNotes', sr.notes);
+
+  // Scoring
+  const sc = data.scoring || {};
+  setChk('chk_points', sc.points?.enabled);    set('pointsFormula',     sc.points?.formula);
+  setChk('chk_team',   sc.team?.enabled);       set('teamScoringMethod', sc.team?.method);
+  set('teamScoringN',  sc.team?.n);             set('teamCategories',    sc.team?.categories);
+  setChk('chk_ag',     sc.ageGraded?.enabled);  set('agStandard',        sc.ageGraded?.standard);
+  setChk('chk_wave',   sc.waves?.enabled);      set('waveNotes',         sc.waves?.notes);
+  set('scoringNotes',  sc.notes);
+
+  // Sync option-settings panels to restored checkbox states
+  OPTION_TOGGLES.forEach(([chkId, settId]) => {
+    const chk = document.getElementById(chkId);
+    const sett = document.getElementById(settId);
+    if (chk && sett) sett.style.display = chk.checked ? 'block' : 'none';
+  });
 }
 
 // ── Init ───────────────────────────────────────────────────────────
